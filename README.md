@@ -1,36 +1,210 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CRM Chatbot (Next.js + Supabase)
 
-## Getting Started
+Mini-CRM para centralizar conversaciones de WhatsApp (vía n8n) y pedidos.
+Incluye login, sidebar compacto, chats estilo WhatsApp (agrupados por número, “no leídos”, indicador **Derivar**), dashboard con métricas y gráfico, y pantalla de pedidos con detalle.
 
-First, run the development server:
+## ✨ Features
+
+- **Auth Supabase** (email/contraseña).
+- **Chats**:
+  - Agrupados por **phone** y preview del último mensaje.
+  - Indicador **Derivar** (franja/ícono) y limpieza automática al abrir.
+  - “No leídos” por número (localStorage + realtime).
+  - Hilo combinado (todas las sesiones del número) + **infinite scroll** hacia arriba.
+  - Botón “**Abrir en WhatsApp**”.
+
+- **Pedidos**: tabla con join a Session, filtros (texto + fechas) y **drawer** de ítems.
+- **Dashboard**: métricas rápidas y gráfico (día/semana/mes/año) con Recharts.
+- **UI**: Sidebar compacto (colapsado por defecto).
+- **Modo claro forzado** (sin seguir el dark del navegador).
+
+## 🧱 Stack
+
+- **Next.js 14+**, **React 18**, **TypeScript**, **Tailwind CSS**
+- **Supabase** (Auth, Postgres, Realtime, RLS)
+- **Recharts** (gráficos), **lucide-react** (íconos)
+- **ESLint + Prettier** (con `prettier-plugin-tailwindcss`)
+
+---
+
+## 🚀 Comenzar
 
 ```bash
+# 1) Dependencias
+npm install
+
+# 2) Variables de entorno
+cp .env.example .env.local
+
+# 3) Dev
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abrí: [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### `.env.example`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```env
+# Supabase (Project Settings → API)
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
 
-## Learn More
+# (Opcional) Código de país por defecto para wa.me (Argentina = 54)
+NEXT_PUBLIC_DEFAULT_COUNTRY=54
+```
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🗃️ Base de datos (tablas mínimas)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```sql
+-- Session
+create table if not exists public."Session" (
+  id bigint primary key generated always as identity,
+  date timestamptz not null default now(),
+  estado text,
+  phone text,
+  derivar_humano boolean not null default false,
+  name text
+);
 
-## Deploy on Vercel
+-- Chat
+create table if not exists public."Chat" (
+  id bigint primary key generated always as identity,
+  date timestamptz not null default now(),
+  tipo text not null,                 -- 'ia' | 'user' | etc
+  message text not null,
+  session_id bigint not null references public."Session"(id) on delete cascade
+);
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+-- Pedido
+create table if not exists public."Pedido" (
+  id bigint primary key generated always as identity,
+  date timestamptz not null default now(),
+  total numeric not null default 0,
+  pedido jsonb not null default '[]',
+  session_id bigint not null references public."Session"(id) on delete cascade
+);
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+-- Índices útiles
+create index if not exists session_date_idx on public."Session"(date desc);
+create index if not exists chat_session_date_idx on public."Chat"(session_id, date);
+create index if not exists pedido_session_date_idx on public."Pedido"(session_id, date);
+```
+
+### Realtime (recomendado para “no leídos”)
+
+```sql
+alter publication supabase_realtime add table public."Chat";
+```
+
+### RLS (políticas mínimas)
+
+> Ajustá a tu modelo de auth; esto asume **usuarios autenticados** leen todo y pueden marcar `derivar_humano`.
+
+```sql
+alter table public."Session" enable row level security;
+alter table public."Chat"    enable row level security;
+alter table public."Pedido"  enable row level security;
+
+-- Leer
+create policy "read_session" on public."Session" for select using ( auth.role() = 'authenticated' );
+create policy "read_chat"    on public."Chat"    for select using ( auth.role() = 'authenticated' );
+create policy "read_pedido"  on public."Pedido"  for select using ( auth.role() = 'authenticated' );
+
+-- Marcar derivar_humano desde la app
+create policy "update_derivar" on public."Session"
+  for update using ( auth.role() = 'authenticated' )
+  with check ( auth.role() = 'authenticated' );
+```
+
+---
+
+## 🧩 Estructura (resumen)
+
+```
+src/
+  app/
+    (app)/
+      dashboard/page.tsx
+      chats/
+        page.tsx
+        Conversation.tsx
+        SessionsList.tsx
+      pedidos/page.tsx
+    login/page.tsx
+    layout.tsx
+    globals.css
+  components/
+    Sidebar.tsx
+    chats/
+      SessionAvatar.tsx
+      SessionGroupItem.tsx
+      MessageBubble.tsx
+      ConversationHeader.tsx
+    pedidos/
+      OrdersTable.tsx
+      OrderDrawer.tsx
+    dashboard/
+      StatCard.tsx
+      StatsGrid.tsx
+      PeriodTabs.tsx
+      ConversationsChart.tsx
+  hooks/
+    useUnreadCounts.ts
+  lib/
+    supabaseClient.ts
+    types.ts            # { Session, Chat, ... }
+    groupByPhone.ts
+    phone.ts            # waLink(), normalizePhone()
+    pedido.ts           # parsePedido(), countItems()
+    currency.ts
+```
+
+---
+
+## 🧪 Scripts
+
+```json
+{
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "format": "prettier --write .",
+    "typecheck": "tsc --noEmit"
+  }
+}
+```
+
+---
+
+## 🖌️ Estilo & Editor
+
+- Formato: **Prettier** (con `prettier-plugin-tailwindcss`).
+- Lint: **ESLint** (`next/core-web-vitals` + `plugin:prettier/recommended`).
+- **Modo claro forzado**: `globals.css` define `:root{ color-scheme: light; }` (no usamos `@media (prefers-color-scheme)`).
+
+---
+
+## 📦 Deploy
+
+- **Vercel**: importa el repo, setea `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY` en Project Settings → Environment Variables.
+- Habilitá **Edge Functions / Realtime** en Supabase si corresponde.
+
+---
+
+## ✅ Roadmap corto
+
+- [ ] Exportar CSV/Excel (Pedidos / Conversaciones).
+- [ ] Filtros avanzados: estado, derivadas, agente.
+- [ ] Realtime en la conversación activa.
+- [ ] Métricas adicionales en Dashboard: mensajes, tasa de derivación, conversión a pedido.
+
+---
+
+### Licencia
+
+MIT — usalo, modificalo y contame cómo te fue 😉
