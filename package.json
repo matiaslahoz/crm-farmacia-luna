@@ -10,7 +10,10 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
+    "docx": "^9.5.1",
+    "googleapis": "^160.0.0",
     "lucide-react": "^0.544.0",
+    "mammoth": "^1.11.0",
     "next": "15.5.3",
     "react": "19.1.0",
     "react-dom": "19.1.0",

@@ -25,21 +25,6 @@ export default function LoginPage() {
     r.replace("/dashboard");
   }
 
-  async function onMagicLink() {
-    setLoading(true);
-    setMsg(null);
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        shouldCreateUser: false,
-        emailRedirectTo: window.location.origin + "/dashboard",
-      },
-    });
-    setLoading(false);
-    if (error) return setMsg(error.message);
-    setMsg("Te enviamos un enlace mágico a tu email ✉️");
-  }
-
   return (
     <div className="grid place-items-center min-h-dvh px-4">
       <div className="w-full max-w-md">

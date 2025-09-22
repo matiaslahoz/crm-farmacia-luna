@@ -25,13 +25,12 @@ export default function Conversation({
   msgs: Chat[];
   loading: boolean;
   hasMore: boolean;
-  onLoadMore: () => void; // se llama al llegar arriba
+  onLoadMore: () => void;
 }) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const nearBottomRef = useRef(true);
 
-  // autoscroll al final cuando llegan nuevos mensajes si estamos cerca del fondo
   useEffect(() => {
     if (nearBottomRef.current)
       bottomRef.current?.scrollIntoView({ behavior: "instant" });

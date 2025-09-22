@@ -11,6 +11,7 @@ import {
   PanelLeftOpen,
   PanelLeftClose,
   type LucideIcon,
+  BookOpen,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
@@ -88,7 +89,6 @@ export default function Sidebar() {
         {!collapsed && <span>Menú</span>}
       </button>
 
-      {/* navegación */}
       <nav className="flex flex-col gap-1 mt-1">
         <NavItem
           href="/dashboard"
@@ -108,9 +108,14 @@ export default function Sidebar() {
           label="Pedidos"
           collapsed={collapsed}
         />
+        <NavItem
+          href="/conocimiento"
+          icon={BookOpen}
+          label="Conocimiento"
+          collapsed={collapsed}
+        />
       </nav>
 
-      {/* salir */}
       <div className="mt-auto">
         <button
           onClick={async () => {

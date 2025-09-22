@@ -17,16 +17,22 @@ export default function ChatsPage() {
   const [selectedPhone, setSelectedPhone] = useState<string | null>(null);
   const [query, setQuery] = useState("");
 
-  // mensajes combinados del phone
   const [msgs, setMsgs] = useState<Chat[]>([]);
   const [loadingMsgs, setLoadingMsgs] = useState(false);
-  const [startIndex, setStartIndex] = useState(0); // índice desde el cual está cargado
+  const [startIndex, setStartIndex] = useState(0);
   const idsRef = useRef<number[]>([]);
 
-  // previews (último mensaje por número)
   const [lastPreview, setLastPreview] = useState<PreviewMap>({});
+  const loadingMoreRef = useRef(false);
 
-  // sesiones → grupos
+  const uniqSortByIdAsc = (arr: Chat[]) => {
+    const map = new Map<number, Chat>();
+    for (const m of arr) map.set(m.id, m);
+    return Array.from(map.values()).sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+  };
+
   useEffect(() => {
     supabase
       .from("Session")
@@ -44,10 +50,8 @@ export default function ChatsPage() {
     ? groups.find((g) => g.phone === selectedPhone)
     : undefined;
 
-  // unread counts (por phone)
   const { counts: unreadCounts, markRead } = useUnreadCounts(groups);
 
-  // cargar previews (último chat por número)
   useEffect(() => {
     if (!groups.length) {
       setLastPreview({});
@@ -83,12 +87,10 @@ export default function ChatsPage() {
     };
   }, [groups]);
 
-  // seleccionar un phone → limpiar derivar_humano y cargar última página
   const handleSelectPhone = useCallback(
     async (phone: string) => {
       setSelectedPhone(phone);
 
-      // limpiar derivar_humano en DB (todas las sesiones de ese número) y estado local
       const toClear =
         groups
           .find((g) => g.phone === phone)
@@ -96,13 +98,11 @@ export default function ChatsPage() {
           .map((s) => s.id) ?? [];
 
       if (toClear.length) {
-        // optimista: actualizamos estado ya
         setSessions((prev) =>
           prev.map((s) =>
             toClear.includes(s.id) ? { ...s, derivar_humano: false } : s
           )
         );
-        // persistimos en DB
         await supabase
           .from("Session")
           .update({ derivar_humano: false })
@@ -112,7 +112,6 @@ export default function ChatsPage() {
     [groups]
   );
 
-  // cuando cambia el seleccionado (o cambian sesiones), traemos mensajes
   useEffect(() => {
     const ids = currentGroup?.sessions.map((s) => s.id) ?? [];
     idsRef.current = ids;
@@ -153,17 +152,17 @@ export default function ChatsPage() {
       );
       setLoadingMsgs(false);
 
-      // al abrir: marcar como leído este phone
       if (selectedPhone) markRead(selectedPhone);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedPhone, sessions]); // si cambian sesiones, refresco ids
+  }, [selectedPhone, sessions]);
 
-  // cargar más (hacia arriba)
   const loadMore = useCallback(async () => {
     const ids = idsRef.current;
     if (!ids.length) return;
     if (startIndex <= 0) return;
+    if (loadingMoreRef.current) return;
+    loadingMoreRef.current = true;
     setLoadingMsgs(true);
 
     const newStart = Math.max(0, startIndex - PAGE_SIZE);
@@ -176,9 +175,13 @@ export default function ChatsPage() {
       .order("date", { ascending: true })
       .range(newStart, newEnd);
 
-    setMsgs((prev) => [...(data || []), ...prev]);
+    setMsgs((prev) => {
+      const merged = [...(data || []), ...prev];
+      return uniqSortByIdAsc(merged);
+    });
     setStartIndex(newStart);
     setLoadingMsgs(false);
+    loadingMoreRef.current = false;
   }, [startIndex]);
 
   const title = currentGroup
@@ -193,7 +196,6 @@ export default function ChatsPage() {
 
   return (
     <div className="flex gap-4 h-full overflow-hidden min-h-0">
-      {/* izquierda: lista */}
       <div className="h-full min-h-0 w-[330px]">
         <SessionsList
           groups={groups}
@@ -206,7 +208,6 @@ export default function ChatsPage() {
         />
       </div>
 
-      {/* derecha: conversación */}
       <div className="flex-1 min-w-0">
         <Conversation
           title={title}
