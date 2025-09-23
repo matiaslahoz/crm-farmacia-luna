@@ -4,6 +4,19 @@ import { Document, Packer, Paragraph, TextRun } from "docx";
 
 export const runtime = "nodejs";
 
+type DocKey = "kb_sinonimos" | "kb_institucional";
+
+const FILE_IDS: Record<DocKey, string | undefined> = {
+  kb_sinonimos: process.env.KB_SINONIMOS_FILE_ID,
+  kb_institucional: process.env.KB_INSTITUCIONAL_FILE_ID,
+};
+
+function resolveFileId(doc: DocKey) {
+  const id = FILE_IDS[doc];
+  if (!id) throw new Error(`Falta env para '${doc}'`);
+  return id;
+}
+
 function toDocxBufferFromText(text: string): Promise<Buffer> {
   const paras = text.split("\n").map(
     (line) =>
@@ -19,15 +32,12 @@ function toDocxBufferFromText(text: string): Promise<Buffer> {
   return Packer.toBuffer(doc);
 }
 
-export async function GET() {
-  const fileId = process.env.KNOWLEDGE_DOC_FILE_ID;
-  if (!fileId)
-    return new Response(
-      JSON.stringify({ error: "Falta KNOWLEDGE_DOC_FILE_ID" }),
-      { status: 500 }
-    );
+export async function GET(req: NextRequest) {
+  const url = new URL(req.url);
+  const doc = (url.searchParams.get("doc") || "kb_institucional") as DocKey;
 
   try {
+    const fileId = resolveFileId(doc);
     const drive = getDrive();
 
     const meta = await drive.files.get({
@@ -53,7 +63,7 @@ export async function GET() {
       const buffer = Buffer.from(res.data as ArrayBuffer);
       const mammoth = await import("mammoth");
       const { value } = await mammoth.extractRawText({ buffer });
-      text = value;
+      text = value ?? "";
     }
 
     return new Response(JSON.stringify({ text }), {
@@ -62,24 +72,20 @@ export async function GET() {
     });
   } catch (e) {
     console.error("Drive GET error", e);
-    return new Response(
-      JSON.stringify({ error: "No se pudo leer el documento" }),
-      { status: 500 }
-    );
+    const msg = e instanceof Error ? e.message : "No se pudo leer el documento";
+    return new Response(JSON.stringify({ error: msg }), { status: 500 });
   }
 }
 
 export async function POST(req: NextRequest) {
-  const fileId = process.env.KNOWLEDGE_DOC_FILE_ID;
-  if (!fileId) {
-    return new Response(
-      JSON.stringify({ error: "Falta KNOWLEDGE_DOC_FILE_ID" }),
-      { status: 500 }
-    );
-  }
-
   try {
-    const body = (await req.json()) as { text?: string };
+    const body = (await req.json()) as {
+      text?: string;
+      doc?: DocKey;
+    };
+    const doc: DocKey = body.doc ?? "kb_institucional";
+    const fileId = resolveFileId(doc);
+
     const text = body.text ?? "";
     const buffer = await toDocxBufferFromText(text);
 
@@ -92,6 +98,7 @@ export async function POST(req: NextRequest) {
         body: buffer as unknown as NodeJS.ReadableStream | Buffer,
       },
       fields: "id",
+      supportsAllDrives: true,
     });
 
     return new Response(JSON.stringify({ ok: true }), {
@@ -99,10 +106,9 @@ export async function POST(req: NextRequest) {
       headers: { "Content-Type": "application/json" },
     });
   } catch (e) {
-    console.error(e);
-    return new Response(
-      JSON.stringify({ error: "No se pudo guardar el documento" }),
-      { status: 500 }
-    );
+    console.error("Drive POST error", e);
+    const msg =
+      e instanceof Error ? e.message : "No se pudo guardar el documento";
+    return new Response(JSON.stringify({ error: msg }), { status: 500 });
   }
 }
