@@ -29,9 +29,27 @@ export default function SessionsList({
       (g) =>
         (g.name || "").toLowerCase().includes(q) ||
         g.phone.includes(q) ||
-        (g.latest.estado || "").toLowerCase().includes(q)
+        (g.latest?.estado || "").toLowerCase().includes(q)
     );
   }, [query, groups]);
+
+  const getLastDate = (g: SessionGroup): number => {
+    const fromPreview = lastPreview[g.phone]?.date;
+    const fromLatest = g?.latest?.date;
+    const fromSessions =
+      Array.isArray(g.sessions) && g.sessions.length
+        ? g.sessions[g.sessions.length - 1]?.date
+        : undefined;
+
+    const candidate = fromPreview ?? fromLatest ?? fromSessions ?? null;
+
+    const ts = candidate ? Date.parse(candidate) : NaN;
+    return Number.isNaN(ts) ? 0 : ts;
+  };
+
+  const sorted = useMemo(() => {
+    return [...filtered].sort((a, b) => getLastDate(b) - getLastDate(a));
+  }, [filtered, lastPreview]);
 
   return (
     <div className="rounded-2xl bg-white border border-gray-200 overflow-hidden flex flex-col h-full min-h-0">
@@ -48,7 +66,7 @@ export default function SessionsList({
       </div>
 
       <div className="flex-1 overflow-auto min-h-0">
-        {filtered.map((g) => {
+        {sorted.map((g) => {
           const needsHuman = g.sessions.some((s) => !!s.derivar_humano);
           return (
             <SessionGroupItem
@@ -58,11 +76,11 @@ export default function SessionsList({
               onSelect={onSelect}
               unread={unreadCounts[g.phone] || 0}
               preview={lastPreview[g.phone] || null}
-              needsHuman={needsHuman} // <— NUEVO
+              needsHuman={needsHuman}
             />
           );
         })}
-        {filtered.length === 0 && (
+        {sorted.length === 0 && (
           <div className="p-6 text-sm text-gray-500">Sin resultados.</div>
         )}
       </div>

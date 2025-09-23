@@ -16,21 +16,18 @@ export default function ChatsPage() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [selectedPhone, setSelectedPhone] = useState<string | null>(null);
   const [query, setQuery] = useState("");
-
   const [msgs, setMsgs] = useState<Chat[]>([]);
   const [loadingMsgs, setLoadingMsgs] = useState(false);
-  const [startIndex, setStartIndex] = useState(0);
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
   const idsRef = useRef<number[]>([]);
-
   const [lastPreview, setLastPreview] = useState<PreviewMap>({});
   const loadingMoreRef = useRef(false);
 
-  const uniqSortByIdAsc = (arr: Chat[]) => {
+  const uniqSortByIdDesc = (arr: Chat[]) => {
     const map = new Map<number, Chat>();
     for (const m of arr) map.set(m.id, m);
-    return Array.from(map.values()).sort(
-      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-    );
+    return Array.from(map.values()).sort((a, b) => b.id - a.id);
   };
 
   useEffect(() => {
@@ -46,9 +43,17 @@ export default function ChatsPage() {
     () => groupByPhone(sessions),
     [sessions]
   );
-  const currentGroup = selectedPhone
-    ? groups.find((g) => g.phone === selectedPhone)
-    : undefined;
+
+  const currentGroup = useMemo(
+    () =>
+      selectedPhone ? groups.find((g) => g.phone === selectedPhone) : undefined,
+    [groups, selectedPhone]
+  );
+
+  const currentIds = useMemo(
+    () => currentGroup?.sessions.map((s) => s.id) ?? [],
+    [currentGroup]
+  );
 
   const { counts: unreadCounts, markRead } = useUnreadCounts(groups);
 
@@ -57,21 +62,18 @@ export default function ChatsPage() {
       setLastPreview({});
       return;
     }
-
     let cancelled = false;
     (async () => {
       const entries = await Promise.all(
         groups.map(async (g) => {
           const ids = g.sessions.map((s) => s.id);
           if (!ids.length) return [g.phone, null] as const;
-
           const { data } = await supabase
             .from("Chat")
             .select("message,date")
             .in("session_id", ids)
             .order("date", { ascending: false })
             .limit(1);
-
           const row = data?.[0] ?? null;
           return [
             g.phone,
@@ -81,7 +83,6 @@ export default function ChatsPage() {
       );
       if (!cancelled) setLastPreview(Object.fromEntries(entries));
     })();
-
     return () => {
       cancelled = true;
     };
@@ -90,13 +91,11 @@ export default function ChatsPage() {
   const handleSelectPhone = useCallback(
     async (phone: string) => {
       setSelectedPhone(phone);
-
       const toClear =
         groups
           .find((g) => g.phone === phone)
           ?.sessions.filter((s) => !!s.derivar_humano)
           .map((s) => s.id) ?? [];
-
       if (toClear.length) {
         setSessions((prev) =>
           prev.map((s) =>
@@ -113,76 +112,75 @@ export default function ChatsPage() {
   );
 
   useEffect(() => {
-    const ids = currentGroup?.sessions.map((s) => s.id) ?? [];
-    idsRef.current = ids;
-    if (!ids.length) {
+    idsRef.current = currentIds;
+    if (!currentIds.length) {
       setMsgs([]);
-      setStartIndex(0);
+      setOffset(0);
+      setHasMore(false);
       return;
     }
 
+    let cancelled = false;
     (async () => {
       setLoadingMsgs(true);
 
-      // 1) total para calcular ventana
       const { count } = await supabase
         .from("Chat")
         .select("id", { count: "exact", head: true })
-        .in("session_id", ids);
+        .in("session_id", currentIds);
 
-      const total = count || 0;
-
-      // 2) última página
-      const start = Math.max(0, total - PAGE_SIZE);
-      const end = Math.max(0, total - 1);
-      setStartIndex(start);
-
-      // 3) fetch ventana
       const { data } = await supabase
         .from("Chat")
         .select("id,date,tipo,message,session_id")
-        .in("session_id", ids)
-        .order("date", { ascending: true })
-        .range(start, end);
+        .in("session_id", currentIds)
+        .order("id", { ascending: false })
+        .range(0, PAGE_SIZE - 1);
 
-      setMsgs(
-        (data || []).sort(
-          (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-        )
-      );
+      if (cancelled) return;
+
+      const initial = uniqSortByIdDesc(data || []);
+      setMsgs(initial);
+      const fetched = data?.length || 0;
+      setOffset(fetched);
+      setHasMore((count || 0) > fetched);
       setLoadingMsgs(false);
-
-      if (selectedPhone) markRead(selectedPhone);
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedPhone, sessions]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentIds.join("|")]);
+
+  useEffect(() => {
+    if (selectedPhone) markRead(selectedPhone);
+  }, [selectedPhone, markRead]);
 
   const loadMore = useCallback(async () => {
     const ids = idsRef.current;
     if (!ids.length) return;
-    if (startIndex <= 0) return;
     if (loadingMoreRef.current) return;
+    if (!hasMore) return;
+
     loadingMoreRef.current = true;
     setLoadingMsgs(true);
 
-    const newStart = Math.max(0, startIndex - PAGE_SIZE);
-    const newEnd = startIndex - 1;
+    const start = offset;
+    const end = offset + PAGE_SIZE - 1;
 
     const { data } = await supabase
       .from("Chat")
       .select("id,date,tipo,message,session_id")
       .in("session_id", ids)
-      .order("date", { ascending: true })
-      .range(newStart, newEnd);
+      .order("id", { ascending: false })
+      .range(start, end);
 
-    setMsgs((prev) => {
-      const merged = [...(data || []), ...prev];
-      return uniqSortByIdAsc(merged);
-    });
-    setStartIndex(newStart);
+    setMsgs((prev) => uniqSortByIdDesc([...(prev || []), ...(data || [])]));
+    const fetched = data?.length || 0;
+    setOffset(start + fetched);
+    setHasMore(fetched === PAGE_SIZE);
     setLoadingMsgs(false);
     loadingMoreRef.current = false;
-  }, [startIndex]);
+  }, [offset, hasMore]);
 
   const title = currentGroup
     ? currentGroup.name || currentGroup.phone
@@ -191,8 +189,6 @@ export default function ChatsPage() {
     currentGroup && currentGroup.sessions.length > 1
       ? `${currentGroup.sessions.length} sesiones combinadas`
       : undefined;
-
-  const hasMore = startIndex > 0;
 
   return (
     <div className="flex gap-4 h-full overflow-hidden min-h-0">
