@@ -190,6 +190,8 @@ export default function ChatsPage() {
       ? `${currentGroup.sessions.length} sesiones combinadas`
       : undefined;
 
+  const msgsDisplay = useMemo(() => [...msgs].reverse(), [msgs]);
+
   return (
     <div className="flex gap-4 h-full overflow-hidden min-h-0">
       <div className="h-full min-h-0 w-[330px]">
@@ -209,7 +211,7 @@ export default function ChatsPage() {
           title={title}
           phone={currentGroup?.phone}
           meta={meta}
-          msgs={msgs}
+          msgs={msgsDisplay}
           loading={loadingMsgs}
           hasMore={hasMore}
           onLoadMore={loadMore}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import type { SessionGroup } from "@/lib/groupByPhone";
 
@@ -12,6 +12,19 @@ export default function useUnreadCounts(groups: SessionGroup[]) {
   const getLastSeen = (phone: string) => localStorage.getItem(key(phone)) || "";
   const setLastSeen = (phone: string, iso: string) =>
     localStorage.setItem(key(phone), iso);
+
+  const groupsSig = useMemo(() => {
+    return groups
+      .map(
+        (g) =>
+          `${g.phone}:${g.sessions
+            .map((s) => s.id)
+            .sort((a, b) => a - b)
+            .join(",")}`
+      )
+      .sort()
+      .join("|");
+  }, [groups]);
 
   useEffect(() => {
     let mounted = true;
@@ -32,15 +45,13 @@ export default function useUnreadCounts(groups: SessionGroup[]) {
           return [g.phone, count || 0] as const;
         })
       );
-
       if (!mounted) return;
       setCounts(Object.fromEntries(entries));
     })();
-
     return () => {
       mounted = false;
     };
-  }, [groups]);
+  }, [groupsSig, groups]);
 
   useEffect(() => {
     subRef.current?.unsubscribe();
@@ -79,12 +90,17 @@ export default function useUnreadCounts(groups: SessionGroup[]) {
       ch.unsubscribe();
       subRef.current = null;
     };
-  }, [groups]);
+  }, [groupsSig, groups]);
 
-  function markRead(phone: string) {
-    setLastSeen(phone, new Date().toISOString());
-    setCounts((p) => ({ ...p, [phone]: 0 }));
-  }
+  const markRead = useCallback(
+    (phone: string) => {
+      const now = new Date().toISOString();
+      const prev = counts[phone] || 0;
+      setLastSeen(phone, now);
+      if (prev !== 0) setCounts((p) => ({ ...p, [phone]: 0 }));
+    },
+    [counts]
+  );
 
-  return { counts, markRead };
+  return useMemo(() => ({ counts, markRead }), [counts, markRead]);
 }
