@@ -3,6 +3,7 @@
 import { useState } from "react";
 import KnowledgeEditor from "@/components/knowledge/KnowledgeEditor";
 import Guidelines from "@/components/knowledge/Guidelines";
+import SynonymsGridEditor from "@/components/knowledge/SynonymsGridEditor";
 
 type DocKey = "kb_sinonimos" | "kb_institucional";
 
@@ -56,7 +57,11 @@ export default function ConocimientoPage() {
 
               {isOpen && (
                 <div id={`panel-${p.key}`} className="border-t border-gray-200">
-                  <KnowledgeEditor doc={p.key} title={p.title} />
+                  {p.key === "kb_sinonimos" ? (
+                    <SynonymsGridEditor />
+                  ) : (
+                    <KnowledgeEditor doc={p.key} title={p.title} />
+                  )}
                 </div>
               )}
             </section>
