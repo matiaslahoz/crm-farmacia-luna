@@ -10,6 +10,17 @@ function fmtTime(ts: string) {
   return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
+function fmtDateAr(ts: string) {
+  const d = new Date(ts);
+
+  return d.toLocaleDateString("es-AR", {
+    weekday: "long",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}
+
 export default function Conversation({
   title,
   phone,
@@ -86,6 +97,7 @@ export default function Conversation({
               own={m.tipo === "ia"}
               text={m.message}
               time={fmtTime(m.date)}
+              date={fmtDateAr(m.date)}
             />
           ))}
 
