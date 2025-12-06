@@ -32,8 +32,8 @@ export default function ChatsPage() {
 
   useEffect(() => {
     supabase
-      .from("Session")
-      .select("id,date,estado,phone,derivar_humano,name")
+      .from("sessions")
+      .select("id,date,status,phone,requires_human,name")
       .order("date", { ascending: false })
       .limit(400)
       .then(({ data }) => setSessions(data || []));
@@ -69,7 +69,7 @@ export default function ChatsPage() {
           const ids = g.sessions.map((s) => s.id);
           if (!ids.length) return [g.phone, null] as const;
           const { data } = await supabase
-            .from("Chat")
+            .from("chats")
             .select("message,date")
             .in("session_id", ids)
             .order("date", { ascending: false })
@@ -94,17 +94,17 @@ export default function ChatsPage() {
       const toClear =
         groups
           .find((g) => g.phone === phone)
-          ?.sessions.filter((s) => !!s.derivar_humano)
+          ?.sessions.filter((s) => !!s.requires_human)
           .map((s) => s.id) ?? [];
       if (toClear.length) {
         setSessions((prev) =>
           prev.map((s) =>
-            toClear.includes(s.id) ? { ...s, derivar_humano: false } : s
+            toClear.includes(s.id) ? { ...s, requires_human: false } : s
           )
         );
         await supabase
-          .from("Session")
-          .update({ derivar_humano: false })
+          .from("sessions")
+          .update({ requires_human: false })
           .in("id", toClear);
       }
     },
@@ -125,13 +125,13 @@ export default function ChatsPage() {
       setLoadingMsgs(true);
 
       const { count } = await supabase
-        .from("Chat")
+        .from("chats")
         .select("id", { count: "exact", head: true })
         .in("session_id", currentIds);
 
       const { data } = await supabase
-        .from("Chat")
-        .select("id,date,tipo,message,session_id")
+        .from("chats")
+        .select("id,date,type,message,session_id")
         .in("session_id", currentIds)
         .order("id", { ascending: false })
         .range(0, PAGE_SIZE - 1);
@@ -168,8 +168,8 @@ export default function ChatsPage() {
     const end = offset + PAGE_SIZE - 1;
 
     const { data } = await supabase
-      .from("Chat")
-      .select("id,date,tipo,message,session_id")
+      .from("chats")
+      .select("id,date,type,message,session_id")
       .in("session_id", ids)
       .order("id", { ascending: false })
       .range(start, end);

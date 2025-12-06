@@ -1,16 +1,16 @@
 export type Session = {
   id: number;
   date: string; // timestamptz
-  estado: string | null; // text
+  status: string | null; // text
   phone: string | number | null; // numeric (usa string o number según preferencia)
-  derivar_humano: boolean | null; // bool
+  requires_human: boolean | null; // bool
   name: string | null; // text
 };
 
 export type Chat = {
   id: number;
   date: string;
-  tipo: "ia" | "usuario";
+  type: "ia" | "usuario";
   message: string | null;
   session_id: number; // FK a Session.id
 };

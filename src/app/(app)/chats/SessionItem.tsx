@@ -21,7 +21,7 @@ export default function SessionItem({
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <div className="truncate font-medium">{s.name || s.phone}</div>
-          {s.derivar_humano ? (
+          {s.requires_human ? (
             <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-800">
               Derivar
             </span>
@@ -32,7 +32,7 @@ export default function SessionItem({
           )}
         </div>
         <div className="text-xs text-gray-500">
-          Estado: {s.estado || "—"} · {new Date(s.date).toLocaleDateString()}
+          Estado: {s.status || "—"} · {new Date(s.date).toLocaleDateString()}
         </div>
       </div>
     </button>

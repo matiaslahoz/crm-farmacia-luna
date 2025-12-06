@@ -29,7 +29,7 @@ export default function SessionsList({
       (g) =>
         (g.name || "").toLowerCase().includes(q) ||
         g.phone.includes(q) ||
-        (g.latest?.estado || "").toLowerCase().includes(q)
+        (g.latest?.status || "").toLowerCase().includes(q)
     );
   }, [query, groups]);
 
@@ -57,7 +57,7 @@ export default function SessionsList({
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
           <input
-            placeholder="Buscar por nombre, teléfono o estado…"
+            placeholder="Buscar por nombre, teléfono o status…"
             className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-gray-900"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -67,7 +67,7 @@ export default function SessionsList({
 
       <div className="flex-1 overflow-auto min-h-0">
         {sorted.map((g) => {
-          const needsHuman = g.sessions.some((s) => !!s.derivar_humano);
+          const needsHuman = g.sessions.some((s) => !!s.requires_human);
           return (
             <SessionGroupItem
               key={g.phone}

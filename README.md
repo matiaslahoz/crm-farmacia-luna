@@ -59,22 +59,22 @@ NEXT_PUBLIC_DEFAULT_COUNTRY=54
 
 ```sql
 -- Session
-create table if not exists public."Session" (
+create table if not exists public."sessions" (
   id bigint primary key generated always as identity,
   date timestamptz not null default now(),
-  estado text,
+  status text,
   phone text,
-  derivar_humano boolean not null default false,
+  requires_human boolean not null default false,
   name text
 );
 
 -- Chat
-create table if not exists public."Chat" (
+create table if not exists public."chats" (
   id bigint primary key generated always as identity,
   date timestamptz not null default now(),
-  tipo text not null,                 -- 'ia' | 'user' | etc
+  type text not null,                 -- 'ia' | 'user' | etc
   message text not null,
-  session_id bigint not null references public."Session"(id) on delete cascade
+  session_id bigint not null references public."sessions"(id) on delete cascade
 );
 
 -- Pedido
@@ -83,37 +83,37 @@ create table if not exists public."Pedido" (
   date timestamptz not null default now(),
   total numeric not null default 0,
   pedido jsonb not null default '[]',
-  session_id bigint not null references public."Session"(id) on delete cascade
+  session_id bigint not null references public."sessions"(id) on delete cascade
 );
 
 -- Índices útiles
-create index if not exists session_date_idx on public."Session"(date desc);
-create index if not exists chat_session_date_idx on public."Chat"(session_id, date);
+create index if not exists session_date_idx on public."sessions"(date desc);
+create index if not exists chat_session_date_idx on public."chats"(session_id, date);
 create index if not exists pedido_session_date_idx on public."Pedido"(session_id, date);
 ```
 
 ### Realtime (recomendado para “no leídos”)
 
 ```sql
-alter publication supabase_realtime add table public."Chat";
+alter publication supabase_realtime add table public."chats";
 ```
 
 ### RLS (políticas mínimas)
 
-> Ajustá a tu modelo de auth; esto asume **usuarios autenticados** leen todo y pueden marcar `derivar_humano`.
+> Ajustá a tu modelo de auth; esto asume **usuarios autenticados** leen todo y pueden marcar `requires_human`.
 
 ```sql
-alter table public."Session" enable row level security;
-alter table public."Chat"    enable row level security;
+alter table public."sessions" enable row level security;
+alter table public."chats"    enable row level security;
 alter table public."Pedido"  enable row level security;
 
 -- Leer
-create policy "read_session" on public."Session" for select using ( auth.role() = 'authenticated' );
-create policy "read_chat"    on public."Chat"    for select using ( auth.role() = 'authenticated' );
+create policy "read_session" on public."sessions" for select using ( auth.role() = 'authenticated' );
+create policy "read_chat"    on public."chats"    for select using ( auth.role() = 'authenticated' );
 create policy "read_pedido"  on public."Pedido"  for select using ( auth.role() = 'authenticated' );
 
--- Marcar derivar_humano desde la app
-create policy "update_derivar" on public."Session"
+-- Marcar requires_human desde la app
+create policy "update_derivar" on public."sessions"
   for update using ( auth.role() = 'authenticated' )
   with check ( auth.role() = 'authenticated' );
 ```
@@ -199,7 +199,7 @@ src/
 ## ✅ Roadmap corto
 
 - [ ] Exportar CSV/Excel (Pedidos / Conversaciones).
-- [ ] Filtros avanzados: estado, derivadas, agente.
+- [ ] Filtros avanzados: status, derivadas, agente.
 - [ ] Realtime en la conversación activa.
 - [ ] Métricas adicionales en Dashboard: mensajes, tasa de derivación, conversión a pedido.
 

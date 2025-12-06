@@ -13,9 +13,9 @@ type SessionRow = {
   id: number;
   date: string;
   phone: string | number | null;
-  derivar_humano: boolean | null;
+  requires_human: boolean | null;
   name: string | null;
-  estado: string | null;
+  status: string | null;
 };
 
 function startOfDay(d: Date) {
@@ -67,8 +67,8 @@ export default function DashboardPage() {
       oneYearAgo.setDate(today.getDate() - 365);
 
       const { data, error } = await supabase
-        .from("Session")
-        .select("id,date,phone,derivar_humano,name,estado")
+        .from("sessions")
+        .select("id,date,phone,requires_human,name,status")
         .gte("date", oneYearAgo.toISOString())
         .order("date", { ascending: true })
         .overrideTypes<SessionRow[], { merge: false }>();
@@ -85,9 +85,9 @@ export default function DashboardPage() {
         id: r.id,
         date: r.date,
         phone: r.phone,
-        derivar_humano: !!r.derivar_humano,
+        requires_human: !!r.requires_human,
         name: r.name,
-        estado: r.estado,
+        status: r.status,
       }));
 
       setSessions(sess);
@@ -119,7 +119,7 @@ export default function DashboardPage() {
       // 3) requieren acción: cantidad de teléfonos con alguna sesión derivada
       const needs = new Set<string>();
       for (const s of sess) {
-        if (s.derivar_humano) needs.add(String(s.phone ?? ""));
+        if (s.requires_human) needs.add(String(s.phone ?? ""));
       }
       setNeedsHuman(needs.size);
 

@@ -94,7 +94,7 @@ export default function Conversation({
           msgs.map((m) => (
             <MessageBubble
               key={m.id}
-              own={m.tipo === "ia"}
+              own={m.type === "ia"}
               text={m.message}
               time={fmtTime(m.date)}
               date={fmtDateAr(m.date)}

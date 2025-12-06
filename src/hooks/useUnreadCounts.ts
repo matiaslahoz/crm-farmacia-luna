@@ -36,10 +36,10 @@ export default function useUnreadCounts(groups: SessionGroup[]) {
           if (ids.length === 0) return [g.phone, 0] as const;
 
           const { count } = await supabase
-            .from("Chat")
+            .from("chats")
             .select("id", { count: "exact", head: true })
             .in("session_id", ids)
-            .neq("tipo", "ia")
+            .neq("type", "ia")
             .gt("date", lastSeen || "1970-01-01");
 
           return [g.phone, count || 0] as const;
@@ -60,14 +60,14 @@ export default function useUnreadCounts(groups: SessionGroup[]) {
 
     ch.on(
       "postgres_changes",
-      { event: "INSERT", schema: "public", table: "Chat" },
+      { event: "INSERT", schema: "public", table: "chats" },
       (payload) => {
         const newRow = payload?.new as {
           session_id: number;
-          tipo: string;
+          type: string;
           date: string;
         };
-        if (!newRow || newRow.tipo === "ia") return;
+        if (!newRow || newRow.type === "ia") return;
 
         const match = groups.find((g) =>
           g.sessions.some((s) => s.id === newRow.session_id)
