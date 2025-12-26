@@ -88,6 +88,33 @@ export default function OrderDrawer({
             </div>
           </div>
         </div>
+
+        <div className="p-4 border-t border-gray-200 bg-gray-50">
+          <button
+            onClick={() => {
+              if (!data) return;
+              const subject = encodeURIComponent(
+                `Presupuesto Pedido #${data.id} - Farmacia Luna`
+              );
+              const itemsList = items
+                .map(
+                  (it) =>
+                    `- ${it.name} (x${it.qty}): ${formatCurrency(
+                      it.unitPrice * it.qty
+                    )}`
+                )
+                .join("\n");
+              const total = formatCurrency(data.total);
+              const body = encodeURIComponent(
+                `Hola ${data.session?.name || "Cliente"},\n\nAquí tienes el detalle de tu pedido:\n\n${itemsList}\n\nTotal: ${total}\n\nSaludos,\nFarmacia Luna`
+              );
+              window.open(`mailto:?subject=${subject}&body=${body}`, "_blank");
+            }}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-lg font-medium hover:bg-teal-700 transition-colors"
+          >
+            Enviar Presupuesto por Mail
+          </button>
+        </div>
       </aside>
     </div>
   );

@@ -12,6 +12,7 @@ import {
   PanelLeftClose,
   type LucideIcon,
   BookOpen,
+  Pill,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
@@ -67,11 +68,11 @@ export default function Sidebar() {
     >
       {/* encabezado */}
       <div className="flex items-center gap-2 px-1">
-        <div className="h-9 w-9 rounded-xl bg-gray-900 text-white grid place-items-center font-bold">
-          CRM
+        <div className="h-9 w-9 rounded-xl bg-teal-600 text-white grid place-items-center font-bold">
+          FL
         </div>
         {!collapsed && (
-          <span className="text-sm font-semibold text-gray-800">Chatbot</span>
+          <span className="text-sm font-semibold text-gray-800">Farmacia Luna</span>
         )}
       </div>
 
@@ -106,6 +107,12 @@ export default function Sidebar() {
           href="/pedidos"
           icon={ShoppingCart}
           label="Pedidos"
+          collapsed={collapsed}
+        />
+        <NavItem
+          href="/productos"
+          icon={Pill}
+          label="Productos"
           collapsed={collapsed}
         />
         <NavItem

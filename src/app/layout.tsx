@@ -1,8 +1,8 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "CRM Chatbot",
-  description: "Mini CRM para conversaciones del chatbot",
+  title: "Farmacia Luna CRM",
+  description: "CRM para Farmacia Luna",
 };
 
 export default function RootLayout({
