@@ -3,18 +3,19 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import OrdersTable, { type UiOrder } from "@/components/pedidos/OrdersTable";
-import OrderDrawer from "@/components/pedidos/OrderDrawer";
+import OrdersTable, { UiOrder } from "./components/OrdersTable";
+import OrderDrawer from "./components/OrderDrawer";
 
 const PAGE_SIZE = 50;
 
 type PedidoRowJoined = {
   id: number;
-  date: string; // timestamptz
+  created_at: string; // timestamptz
   total: number; // numeric
-  pedido: unknown; // json
+  items: unknown; // json
   session_id: number;
-  Session: { name: string | null; phone: number | string | null } | null;
+  name: string | null;
+  phone: number | string | null;
 };
 
 function endOfDayISO(d: string): string {
@@ -26,8 +27,8 @@ function filterClient(data: readonly UiOrder[], query: string): UiOrder[] {
   const s = query.trim().toLowerCase();
   if (!s) return [...data];
   return data.filter((r) => {
-    const name = (r.session?.name || "").toLowerCase();
-    const phone = String(r.session?.phone || "");
+    const name = (r.name || "").toLowerCase();
+    const phone = String(r.phone || "");
     return name.includes(s) || phone.includes(s);
   });
 }
@@ -51,15 +52,13 @@ export default function PedidosPage() {
     const end = offset + PAGE_SIZE - 1;
 
     let query = supabase
-      .from("Pedido")
-      .select(
-        "id,date,total,pedido,session_id, Session:session_id (name, phone)"
-      )
-      .order("date", { ascending: false })
+      .from("orders_crm")
+      .select("id,created_at,total,items,name, phone")
+      .order("created_at", { ascending: false })
       .range(offset, end);
 
-    if (from) query = query.gte("date", from);
-    if (to) query = query.lte("date", endOfDayISO(to));
+    if (from) query = query.gte("created_at", from);
+    if (to) query = query.lte("created_at", endOfDayISO(to));
 
     const { data, error } = await query.returns<PedidoRowJoined[]>();
     if (error) {
@@ -72,10 +71,11 @@ export default function PedidosPage() {
 
     const mapped: UiOrder[] = (data ?? []).map((d) => ({
       id: d.id,
-      date: d.date,
+      created_at: d.created_at,
       total: d.total,
-      pedido: d.pedido,
-      session: d.Session ?? null,
+      items: d.items,
+      name: d.name ?? null,
+      phone: d.phone ?? null,
     }));
 
     setRows(mapped);

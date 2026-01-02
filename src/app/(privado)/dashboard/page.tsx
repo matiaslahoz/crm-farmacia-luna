@@ -3,11 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import type { Session } from "@/lib/types";
-import PeriodTabs, { type Period } from "@/components/dashboard/PeriodTabs";
+import PeriodTabs, { Period } from "./components/PeriodTabs";
 import ConversationsChart, {
-  type ChartPoint,
-} from "@/components/dashboard/ConversationsChart";
-import StatsGrid from "@/components/dashboard/StatsGrid";
+  ChartPoint,
+} from "./components/ConversationsChart";
+import StatsGrid from "./components/StatsGrid";
 
 type SessionRow = {
   id: number;
@@ -125,10 +125,10 @@ export default function DashboardPage() {
 
       // 4) pedidos de hoy (count exact HEAD)
       const { count: ordersCount } = await supabase
-        .from("Pedido")
+        .from("orders")
         .select("id", { count: "exact", head: true })
-        .gte("date", start)
-        .lte("date", end);
+        .gte("created_at", start)
+        .lte("created_at", end);
       setOrdersToday(ordersCount ?? 0);
 
       setLoading(false);

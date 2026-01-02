@@ -12,13 +12,14 @@ export default function OrderDrawer({
   onClose: () => void;
   data: {
     id: number;
-    date: string;
+    created_at: string;
     total: number;
-    pedido: unknown;
-    session?: { name: string | null; phone: number | string | null } | null;
+    items: unknown;
+    name: string | null;
+    phone: number | string | null;
   } | null;
 }) {
-  const items = data ? parsePedido(data.pedido) : [];
+  const items = data ? parsePedido(data.items) : [];
   return (
     <div className={`fixed inset-0 z-50 ${open ? "" : "pointer-events-none"}`}>
       <div
@@ -33,7 +34,7 @@ export default function OrderDrawer({
           <div>
             <div className="text-sm text-gray-500">Pedido #{data?.id}</div>
             <div className="text-xs text-gray-500">
-              {data ? new Date(data.date).toLocaleString() : ""}
+              {data ? new Date(data.created_at).toLocaleString() : ""}
             </div>
           </div>
           <button
@@ -48,11 +49,9 @@ export default function OrderDrawer({
           <div className="rounded-xl border border-gray-300 p-3">
             <div className="text-sm font-medium">Cliente</div>
             <div className="text-sm text-gray-600">
-              {(data?.session?.name && String(data.session.name)) || "—"}
+              {(data?.name && String(data.name)) || "—"}
             </div>
-            <div className="text-xs text-gray-500">
-              {data?.session?.phone ?? "—"}
-            </div>
+            <div className="text-xs text-gray-500">{data?.phone ?? "—"}</div>
           </div>
 
           <div className="rounded-xl border border-gray-300 p-3">
@@ -106,7 +105,7 @@ export default function OrderDrawer({
                 .join("\n");
               const total = formatCurrency(data.total);
               const body = encodeURIComponent(
-                `Hola ${data.session?.name || "Cliente"},\n\nAquí tienes el detalle de tu pedido:\n\n${itemsList}\n\nTotal: ${total}\n\nSaludos,\nFarmacia Luna`
+                `Hola ${data.name || "Cliente"},\n\nAquí tienes el detalle de tu pedido:\n\n${itemsList}\n\nTotal: ${total}\n\nSaludos,\nFarmacia Luna`
               );
               window.open(`mailto:?subject=${subject}&body=${body}`, "_blank");
             }}

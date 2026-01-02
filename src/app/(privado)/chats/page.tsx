@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import type { Session, Chat } from "@/lib/types";
-import SessionsList from "./SessionsList";
-import Conversation from "./Conversation";
+import SessionsList from "./components/SessionsList";
+import Conversation from "./components/Conversation";
 import { groupByPhone, type SessionGroup } from "@/lib/groupByPhone";
 import useUnreadCounts from "@/hooks/useUnreadCounts";
 

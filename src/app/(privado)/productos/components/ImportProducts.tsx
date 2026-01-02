@@ -20,12 +20,12 @@ export default function ImportProducts() {
   const handleUpload = async () => {
     if (!file) return;
 
-    const webhookUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL;
-    if (!webhookUrl) {
-      setStatus("error");
-      setMsg("Falta configurar NEXT_PUBLIC_N8N_WEBHOOK_URL en .env");
-      return;
-    }
+    // const webhookUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL;
+    // if (!webhookUrl) {
+    //   setStatus("error");
+    //   setMsg("Falta configurar NEXT_PUBLIC_N8N_WEBHOOK_URL en .env");
+    //   return;
+    // }
 
     setUploading(true);
     setStatus("idle");
@@ -36,7 +36,7 @@ export default function ImportProducts() {
       // Optional: Add a filename or other metadata if needed by n8n
       formData.append("filename", file.name);
 
-      const res = await fetch(webhookUrl, {
+      const res = await fetch("/api/productos", {
         method: "POST",
         body: formData,
       });

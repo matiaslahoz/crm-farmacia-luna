@@ -171,7 +171,7 @@ export default function SynonymsGridEditor() {
       {err && <div className="text-sm text-red-600">{err}</div>}
 
       <div className="border rounded-xl overflow-hidden">
-        <div className="grid grid-cols-12 bg-gray-50 border-b text-xs font-medium text-gray-600">
+        <div className="grid grid-cols-12 border-b text-xs font-semibold bg-muted/30">
           <div className="col-span-7 px-3 py-2">aliases</div>
           <div className="col-span-4 px-3 py-2 border-l">canonical</div>
           <div className="col-span-1 px-3 py-2 border-l text-center">−</div>
@@ -179,10 +179,13 @@ export default function SynonymsGridEditor() {
 
         <div className="max-h-[60vh] overflow-auto">
           {rows.map((r, i) => (
-            <div key={i} className="grid grid-cols-12 border-b last:border-b-0">
+            <div
+              key={i}
+              className="grid grid-cols-12 border-b last:border-b-0 min-h-[44px]"
+            >
               <div className="col-span-7 p-0">
                 <textarea
-                  className="w-full h-full min-h-[44px] px-3 py-2 text-sm outline-none"
+                  className="w-full min-h-[44px] px-3 py-2 text-sm outline-none"
                   value={r.aliases}
                   onChange={(e) => updateCell(i, "aliases", e.target.value)}
                   placeholder="alias1, alias2 o alias3"
@@ -190,7 +193,7 @@ export default function SynonymsGridEditor() {
               </div>
               <div className="col-span-4 p-0 border-l">
                 <input
-                  className="w-full h-full px-3 py-2 text-sm outline-none"
+                  className="w-full px-3 py-2 text-sm outline-noneF"
                   value={r.canonical}
                   onChange={(e) => updateCell(i, "canonical", e.target.value)}
                   placeholder="nombre canónico"

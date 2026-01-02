@@ -11,6 +11,31 @@ const FILE_IDS: Record<Exclude<DocKey, "kb_sinonimos">, string | undefined> = {
   kb_institucional: process.env.KB_INSTITUCIONAL_FILE_ID,
 };
 
+async function triggerN8nKnowledgeSync(payload: unknown) {
+  const url = process.env.N8N_KNOWLEDGE_SYNC_URL;
+  if (!url) return;
+
+  const apiKey = process.env.N8N_KNOWLEDGE_API_KEY;
+  if (!apiKey) {
+    console.warn("N8N_KNOWLEDGE_API_KEY not set");
+    return;
+  }
+
+  try {
+    await fetch(url, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": apiKey,
+      },
+      body: JSON.stringify(payload),
+      cache: "no-store",
+    });
+  } catch (err) {
+    console.error("[n8n] sync failed:", err);
+  }
+}
+
 function resolveFileId(doc: Exclude<DocKey, "kb_sinonimos">): string {
   const id = FILE_IDS[doc];
   if (!id) throw new Error(`Falta env para '${doc}'`);
@@ -302,6 +327,14 @@ export async function POST(req: NextRequest) {
         valueInputOption: "RAW",
         requestBody: { values: rows },
       });
+
+      await triggerN8nKnowledgeSync({
+        type: "kb_update",
+        doc: "kb_sinonimos",
+        spreadsheetId,
+        updatedAt: new Date().toISOString(),
+      });
+
       return new Response(JSON.stringify({ ok: true }), {
         status: 200,
         headers: { "Content-Type": "application/json" },
@@ -321,6 +354,13 @@ export async function POST(req: NextRequest) {
       },
       fields: "id",
       supportsAllDrives: true,
+    });
+
+    await triggerN8nKnowledgeSync({
+      type: "kb_update",
+      doc: "kb_institucional",
+      fileId,
+      updatedAt: new Date().toISOString(),
     });
 
     return new Response(JSON.stringify({ ok: true }), {

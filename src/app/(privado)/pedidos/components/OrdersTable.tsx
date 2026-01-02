@@ -3,10 +3,11 @@ import { parsePedido, countItems } from "@/lib/pedido";
 
 export type UiOrder = {
   id: number;
-  date: string;
+  created_at: string;
   total: number;
-  pedido: unknown;
-  session?: { name: string | null; phone: number | string | null } | null;
+  items: unknown;
+  name: string | null;
+  phone: number | string | null;
 };
 
 export default function OrdersTable({
@@ -31,16 +32,16 @@ export default function OrdersTable({
         </thead>
         <tbody>
           {rows.map((r) => {
-            const items = parsePedido(r.pedido);
+            const items = parsePedido(r.items);
             return (
               <tr
                 key={r.id}
                 className="border-t border-gray-200 hover:bg-gray-50"
               >
-                <td className="px-3 py-2">{r.session?.name || "—"}</td>
-                <td className="px-3 py-2">{r.session?.phone || "—"}</td>
+                <td className="px-3 py-2">{r.name || "—"}</td>
+                <td className="px-3 py-2">{r.phone || "—"}</td>
                 <td className="px-3 py-2">
-                  {new Date(r.date).toLocaleString()}
+                  {new Date(r.created_at).toLocaleString()}
                 </td>
                 <td className="px-3 py-2 text-right">{countItems(items)}</td>
                 <td className="px-3 py-2 text-right">

@@ -1,6 +1,6 @@
-import ImportProducts from "@/components/productos/ImportProducts";
-import ProductsTable from "@/components/productos/ProductsTable";
 import { Pill } from "lucide-react";
+import ImportProducts from "./components/ImportProducts";
+import ProductsTable from "./components/ProductsTable";
 
 export default function ProductsPage() {
   return (

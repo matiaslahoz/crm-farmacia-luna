@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import KnowledgeEditor from "@/components/knowledge/KnowledgeEditor";
-import Guidelines from "@/components/knowledge/Guidelines";
-import SynonymsGridEditor from "@/components/knowledge/SynonymsGridEditor";
+import Guidelines from "./components/Guidelines";
+import SynonymsGridEditor from "./components/SynonymsGridEditor";
+import KnowledgeEditor from "./components/KnowledgeEditor";
 
 type DocKey = "kb_sinonimos" | "kb_institucional";
 
