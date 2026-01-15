@@ -172,9 +172,11 @@ export default function SynonymsGridEditor() {
 
       <div className="border rounded-xl overflow-hidden">
         <div className="grid grid-cols-12 border-b text-xs font-semibold bg-muted/30">
-          <div className="col-span-7 px-3 py-2">aliases</div>
-          <div className="col-span-4 px-3 py-2 border-l">canonical</div>
-          <div className="col-span-1 px-3 py-2 border-l text-center">−</div>
+          <div className="col-span-7 px-3 py-2">Nombres alternativos</div>
+
+          <div className="col-span-4 px-3 py-2 border-l">Nombre principal</div>
+
+          <div className="col-span-1 px-3 py-2 border-l text-center">-</div>
         </div>
 
         <div className="max-h-[60vh] overflow-auto">
@@ -188,7 +190,7 @@ export default function SynonymsGridEditor() {
                   className="w-full min-h-[44px] px-3 py-2 text-sm outline-none"
                   value={r.aliases}
                   onChange={(e) => updateCell(i, "aliases", e.target.value)}
-                  placeholder="alias1, alias2 o alias3"
+                  placeholder="alternativo1, alternativo2 o alternativo3"
                 />
               </div>
               <div className="col-span-4 p-0 border-l">
@@ -196,7 +198,7 @@ export default function SynonymsGridEditor() {
                   className="w-full px-3 py-2 text-sm outline-noneF"
                   value={r.canonical}
                   onChange={(e) => updateCell(i, "canonical", e.target.value)}
-                  placeholder="nombre canónico"
+                  placeholder="nombre principal"
                 />
               </div>
               <div className="col-span-1 border-l flex items-center justify-center">
