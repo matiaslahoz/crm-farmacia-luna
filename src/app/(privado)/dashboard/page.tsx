@@ -8,6 +8,7 @@ import ConversationsChart, {
   ChartPoint,
 } from "./components/ConversationsChart";
 import StatsGrid from "./components/StatsGrid";
+import { LayoutGrid } from "lucide-react";
 
 type SessionRow = {
   id: number;
@@ -99,7 +100,7 @@ export default function DashboardPage() {
 
       // 1) hoy: conversaciones (= sesiones de hoy)
       const todayCount = sess.filter((s) =>
-        isSameDay(new Date(s.date), today)
+        isSameDay(new Date(s.date), today),
       ).length;
       setTodayConvos(todayCount);
 
@@ -113,7 +114,7 @@ export default function DashboardPage() {
       }
       setNewNumbersToday(
         Array.from(firstByPhone.values()).filter((d) => isSameDay(d, today))
-          .length
+          .length,
       );
 
       // 3) requieren acción: cantidad de teléfonos con alguna sesión derivada
@@ -201,10 +202,24 @@ export default function DashboardPage() {
   }, [sessions, period]);
 
   return (
-    <div className="flex flex-col gap-6 min-h-0">
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-gray-900">Dashboard</h1>
-        <PeriodTabs period={period} onChange={setPeriod} />
+    <div className="flex flex-col gap-6 h-full overflow-y-auto pr-2">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between shrink-0">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl shadow-lg shadow-purple-500/20 text-white">
+            <LayoutGrid className="size-6" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+              Dashboard
+            </h1>
+            <p className="text-slate-500 text-sm font-medium">
+              Panel de control y seguimiento
+            </p>
+          </div>
+        </div>
+        <div className="w-full sm:w-auto">
+          <PeriodTabs period={period} onChange={setPeriod} />
+        </div>
       </div>
 
       <StatsGrid

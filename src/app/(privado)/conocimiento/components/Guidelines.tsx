@@ -44,39 +44,30 @@ export default function Guidelines() {
             <div className="px-4 pb-4">
               <ol className="list-decimal pl-5 space-y-2 text-sm text-gray-700">
                 <li>
-                  <b>Una regla por línea</b>. Usá la flecha <code>=&gt;</code>.
-                  Las líneas inválidas se ignoran.
+                  En <b>Nombre principal</b> escribí el nombre real, original o
+                  el que uses en tu sistema.
                 </li>
                 <li>
-                  <b>Sinónimos simples:</b>{" "}
-                  <code>{"<alias1>, <alias2> o <alias3> => <canonico>"}</code>
+                  En <b>Nombres alternativos</b> escribí las palabras que suelen
+                  usar los clientes para referirse a ese producto.
                 </li>
                 <li>
-                  <b>Con “si te piden”:</b>{" "}
-                  <code>{"si te piden <texto> => <canonico>"}</code>
+                  Podés poner <b>varios nombres alternativos</b> separados por
+                  coma.
                 </li>
                 <li>
-                  <b>Fallback de medida:</b>{" "}
-                  <code>
-                    {
-                      "si te piden de <N> y tenes/tenés de <M> ofrece/ofrecé ese"
-                    }
-                  </code>{" "}
-                  (N/M con coma o punto).
+                  No distingue <b>mayúsculas ni minúsculas</b>.
                 </li>
                 <li>
-                  No distingue mayúsculas/minúsculas;{" "}
-                  <b>la última regla prevalece</b>. Preferí <b>singular</b> y
-                  evitá palabras muy cortas.
+                  Busque utilizar palabras en <b>singular</b> y <b>evite</b>{" "}
+                  palabras muy cortas.
                 </li>
               </ol>
 
               <div className="mt-3 text-xs text-gray-500">
                 <p className="mb-1">Ejemplos:</p>
                 <pre className="whitespace-pre-wrap bg-gray-50 border border-gray-200 rounded-lg p-3">
-                  {`clavo, clavito o puntilla => clavo
-si te piden barral para cortina => barral
-si te piden de 70 y tenes de 69 ofrece ese`}
+                  {`clavo, clavito, puntilla => clavo`}
                 </pre>
               </div>
             </div>
@@ -108,31 +99,31 @@ si te piden de 70 y tenes de 69 ofrece ese`}
           {open.institucional && (
             <div className="px-4 pb-4">
               <p className="text-sm text-gray-700 mb-2">
-                Para que el prompt lo entienda perfecto, usá{" "}
-                <b>bloques etiquetados</b> (en mayúsculas, sin tildes) y pares
-                <code> clave: valor</code>, una por línea. Separá secciones con
-                una línea en blanco.
+                Para que se entienda perfectamente, escribí la información en{" "}
+                <b>secciones</b> con un título entre corchetes (en MAYÚSCULAS,
+                sin tildes) y debajo poné <code>clave: valor</code> (una por
+                línea). Separá secciones con una línea en blanco.
               </p>
 
               <ul className="list-disc pl-5 space-y-1 text-sm text-gray-700">
                 <li>
-                  Etiquetas sugeridas: <code>[MEDIOS_DE_PAGO]</code>,{" "}
+                  Secciones sugeridas: <code>[MEDIOS_DE_PAGO]</code>,{" "}
                   <code>[ENVIOS]</code>, <code>[DEVOLUCIONES]</code>,{" "}
                   <code>[HORARIOS]</code>, <code>[CONTACTO]</code>,{" "}
                   <code>[SUCURSALES]</code>, <code>[GARANTIA]</code>,{" "}
                   <code>[FACTURACION]</code>, <code>[PROMOCIONES]</code>.
                 </li>
                 <li>
-                  Usá <b>snake_case</b> en claves (
-                  <code>tarjetas_aceptadas</code>, <code>gratis_desde</code>…).
+                  En las claves usá nombres simples con guión bajo, por ejemplo:{" "}
+                  <code>tarjetas_aceptadas</code>, <code>gratis_desde</code>.
                 </li>
                 <li>
-                  Si algo no aplica, poné <code>N/A</code>. URLs completas
-                  cuando apliquen.
+                  Si algo no aplica, poné <code>N/A</code>. Si hay links, pegá
+                  la URL completa.
                 </li>
                 <li>
-                  El bot prioriza la info más reciente: repetí la clave para
-                  actualizar (la <b>última</b> gana).
+                  Si necesitás cambiar un dato, repetí la misma clave:{" "}
+                  <b>vale la última</b>.
                 </li>
               </ul>
 
@@ -160,7 +151,7 @@ tracking: si (mail y whatsapp)
 [DEVOLUCIONES]
 plazo: 30 dias corridos
 condiciones: sin uso, en empaque original, con comprobante
-quien_cubre_envio: tipear motivo; fallas cubre la empresa
+quien_cubre_envio: segun motivo (falla: empresa)
 
 [HORARIOS]
 atencion: lun-vie 09-18 | sab 10-14
@@ -178,7 +169,7 @@ sucursal_2: Av. Siempre Viva 742, GBA
 [GARANTIA]
 tipo: oficial
 plazo: 12 meses
-procedimiento: contactar soporte con numero de orden
+check: contactar soporte con numero de orden
 
 [FACTURACION]
 tipos: A, B
@@ -191,9 +182,9 @@ descuentos: 10% transferencia (no acumulable)`}
               </div>
 
               <p className="text-xs text-gray-500 mt-3">
-                <b>Tip:</b> mantené la redacción telegráfica (clave: valor). Si
-                agregás texto libre, hacelo debajo de la clave correspondiente
-                para que el parser lo asocie.
+                <b>Tip:</b> mantené el formato <code>clave: valor</code>. Si
+                querés agregar una aclaración, ponela debajo de la clave
+                correspondiente.
               </p>
             </div>
           )}

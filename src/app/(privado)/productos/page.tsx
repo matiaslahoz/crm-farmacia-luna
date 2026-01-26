@@ -1,28 +1,27 @@
 import { Pill } from "lucide-react";
 import ImportProducts from "./components/ImportProducts";
-import ProductsTable from "./components/ProductsTable";
 
 export default function ProductsPage() {
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Pill className="size-7 text-teal-600" />
-            Productos
-          </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Gestioná el stock, precios y requisitos de venta.
-          </p>
+    <div className="h-full overflow-y-auto pr-2 space-y-7">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between shrink-0">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl shadow-lg shadow-purple-500/20 text-white">
+            <Pill className="size-6" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+              Productos
+            </h1>
+            <p className="text-slate-500 text-sm font-medium">
+              Gestioná el stock, precios y requisitos de venta
+            </p>
+          </div>
         </div>
-      </header>
+      </div>
 
       <section>
         <ImportProducts />
-      </section>
-
-      <section>
-        <ProductsTable />
       </section>
     </div>
   );

@@ -68,9 +68,9 @@ export default function ImportProducts() {
         datos de productos.
       </p>
 
-      <div className="flex items-end gap-3">
-        <div className="flex-1">
-          <label className="block text-xs font-medium text-gray-700 mb-1">
+      <div className="flex flex-col md:flex-row md:items-end gap-4 md:gap-3">
+        <div className="w-full md:flex-1">
+          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
             Archivo .txt
           </label>
           <input
@@ -78,20 +78,19 @@ export default function ImportProducts() {
             accept=".txt,.csv"
             onChange={handleFileChange}
             disabled={uploading}
-            className="block w-full text-sm text-gray-500
-              file:mr-4 file:py-2 file:px-4
-              file:rounded-lg file:border-0
+            className="block w-full text-sm text-slate-500
+              file:mr-4 file:py-2.5 file:px-4
+              file:rounded-xl file:border-0
               file:text-sm file:font-semibold
-              file:bg-teal-50 file:text-teal-700
-              hover:file:bg-teal-100
-              cursor-pointer border border-gray-300 rounded-lg"
+              file:bg-purple-50 file:text-purple-700
+              hover:file:bg-purple-100
+              cursor-pointer border border-slate-200 rounded-xl bg-white p-1"
           />
         </div>
         <button
           onClick={handleUpload}
           disabled={!file || uploading}
-          className="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium
-            disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-800 transition-colors"
+          className="w-full md:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-violet-600 text-white font-medium shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 hover:from-purple-500 hover:to-violet-500 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
         >
           {uploading ? "Subiendo..." : "Procesar"}
         </button>

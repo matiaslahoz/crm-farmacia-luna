@@ -15,17 +15,17 @@ export default function PeriodTabs({
   onChange: (p: Period) => void;
 }) {
   return (
-    <div className="inline-flex rounded-xl border border-gray-200 bg-white p-1">
+    <div className="inline-flex items-center gap-1 rounded-full bg-white p-1.5 shadow-sm border border-slate-200/60">
       {options.map((opt) => {
         const active = period === opt.key;
         return (
           <button
             key={opt.key}
             onClick={() => onChange(opt.key)}
-            className={`px-3 py-1.5 text-sm cursor-pointer rounded-lg ${
+            className={`px-4 py-1.5 text-sm font-medium transition-all duration-200 rounded-full ${
               active
-                ? "bg-gray-900 text-white"
-                : "text-gray-700 hover:bg-gray-100"
+                ? "bg-gradient-to-r from-purple-500 to-violet-600 text-white shadow-md shadow-purple-500/25"
+                : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
             }`}
           >
             {opt.label}

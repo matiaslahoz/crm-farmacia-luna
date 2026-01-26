@@ -2,9 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import ScrollArrows from "./ScrollArrows";
+import { DocKey } from "../types/types";
 
 type Props = {
-  doc: "kb_sinonimos" | "kb_institucional";
+  doc: DocKey;
   title?: string;
 };
 

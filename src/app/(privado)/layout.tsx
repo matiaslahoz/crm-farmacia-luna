@@ -6,7 +6,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <AuthGuard>
       <div className="h-dvh overflow-hidden flex bg-gray-50">
         <Sidebar />
-        <main className="flex-1 p-6 overflow-hidden min-h-0">{children}</main>
+        <main className="flex-1 p-6 pt-20 md:pt-6 overflow-hidden min-h-0">
+          {children}
+        </main>
       </div>
     </AuthGuard>
   );

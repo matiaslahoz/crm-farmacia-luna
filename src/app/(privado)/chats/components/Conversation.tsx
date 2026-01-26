@@ -29,6 +29,7 @@ export default function Conversation({
   loading,
   hasMore,
   onLoadMore,
+  onBack,
 }: {
   title?: string | null;
   phone?: number | string | null;
@@ -37,6 +38,7 @@ export default function Conversation({
   loading: boolean;
   hasMore: boolean;
   onLoadMore: () => void;
+  onBack?: () => void;
 }) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -72,7 +74,12 @@ export default function Conversation({
 
   return (
     <div className="rounded-2xl bg-white border border-gray-200 flex flex-col h-full overflow-hidden min-h-0">
-      <ConversationHeader title={title} phone={phone} meta={meta} />
+      <ConversationHeader
+        title={title}
+        phone={phone}
+        meta={meta}
+        onBack={onBack}
+      />
 
       <div
         ref={listRef}
