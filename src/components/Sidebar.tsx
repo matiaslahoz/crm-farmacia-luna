@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import Image from "next/image";
 
 function NavItem({
   href,
@@ -80,13 +81,13 @@ function AppLogo({
       {/* Logo de la app */}
       <div className="relative">
         <div className="h-10 w-10 rounded-xl overflow-hidden shadow-lg shadow-purple-500/20 ring-2 ring-purple-100">
-          {/* <Image
+          <Image
             src="/logo.jpg"
-            alt="La Cantera"
+            alt="Farmacia Luna"
             width={40}
             height={40}
             className="object-cover w-full h-full"
-          /> */}
+          />
         </div>
         {/* Punto de estado online */}
         <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 border-2 border-white rounded-full" />

@@ -10,7 +10,7 @@ function getDriveOAuthClient() {
   const refreshToken = process.env.GOOGLE_OAUTH_REFRESH_TOKEN!;
   if (!clientId || !clientSecret || !refreshToken) {
     throw new Error(
-      "Faltan vars OAuth (CLIENT_ID/CLIENT_SECRET/REFRESH_TOKEN)"
+      "Faltan vars OAuth (CLIENT_ID/CLIENT_SECRET/REFRESH_TOKEN)",
     );
   }
 
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
     if (!(file instanceof File)) {
       return NextResponse.json(
         { error: "Falta 'file' en el FormData" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -62,12 +62,30 @@ export async function POST(req: Request) {
       fields: "id,name,parents,webViewLink",
     });
 
+    const webhookUrl = process.env.FARMACIA_API_BASE_URL;
+    const webhookKey = process.env.FARMACIA_API_KEY;
+
+    if (webhookUrl && webhookKey) {
+      fetch(webhookUrl, {
+        method: "GET",
+        headers: {
+          "x-api-key": webhookKey,
+        },
+      })
+        .then((r) => {
+          console.log("Webhook response status:", r.status);
+        })
+        .catch((e) => {
+          console.error("Error disparando webhook:", e);
+        });
+    }
+
     return NextResponse.json(res.data, { status: 200 });
   } catch (err) {
     console.error(err);
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Error desconocido" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -4,22 +4,7 @@ import { useEffect, useRef } from "react";
 import type { Chat } from "@/lib/types";
 import ConversationHeader from "./ConversationHeader";
 import MessageBubble from "./MessageBubble";
-
-function fmtTime(ts: string) {
-  const d = new Date(ts);
-  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-}
-
-function fmtDateAr(ts: string) {
-  const d = new Date(ts);
-
-  return d.toLocaleDateString("es-AR", {
-    weekday: "long",
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
-}
+import { fmtDateAr, fmtTime } from "@/lib/dates";
 
 export default function Conversation({
   title,

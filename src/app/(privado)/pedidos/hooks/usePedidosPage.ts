@@ -41,7 +41,6 @@ export function usePedidosPage() {
       setLoading(false);
       return;
     }
-    console.log("data", data);
     const mapped: UiOrder[] = (data ?? []).map((d) => ({
       id: d.id,
       created_at: d.created_at,
