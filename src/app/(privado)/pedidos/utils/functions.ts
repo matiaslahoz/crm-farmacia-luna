@@ -7,8 +7,8 @@ export function filterClient(
   const s = query.trim().toLowerCase();
   if (!s) return [...data];
   return data.filter((r) => {
-    const name = (r.session?.name || "").toLowerCase();
-    const phone = String(r.session?.phone || "");
+    const name = (r?.name || "").toLowerCase();
+    const phone = String(r?.phone || "");
     return name.includes(s) || phone.includes(s);
   });
 }
