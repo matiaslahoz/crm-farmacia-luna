@@ -1,3 +1,4 @@
+import { ChartPoint } from "@/app/(privado)/dashboard/types/types";
 import {
   AreaChart,
   Area,
@@ -7,8 +8,6 @@ import {
   Tooltip,
   CartesianGrid,
 } from "recharts";
-
-export type ChartPoint = { label: string; value: number };
 
 export default function ConversationsChart({
   data,

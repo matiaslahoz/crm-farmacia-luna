@@ -4,7 +4,8 @@ import { useEffect, useRef } from "react";
 import type { Chat } from "@/lib/types";
 import ConversationHeader from "./ConversationHeader";
 import MessageBubble from "./MessageBubble";
-import { fmtDateAr, fmtTime } from "@/lib/dates";
+
+import { fmtTime, fmtDateAr } from "@/lib/dates";
 
 export default function Conversation({
   title,

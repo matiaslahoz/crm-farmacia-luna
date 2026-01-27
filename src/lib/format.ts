@@ -11,3 +11,13 @@ export function fmtTime(ts: string) {
   const d = new Date(ts);
   return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
+
+export function formatDayLabel(d: Date) {
+  return d.toLocaleDateString(undefined, { day: "2-digit", month: "2-digit" });
+}
+export function formatMonthLabel(d: Date) {
+  return d.toLocaleDateString(undefined, { month: "short", year: "2-digit" });
+}
+export function formatYearLabel(d: Date) {
+  return d.getFullYear().toString();
+}

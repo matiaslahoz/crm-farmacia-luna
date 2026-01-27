@@ -1,12 +1,7 @@
 import SessionAvatar from "./SessionAvatar";
 import type { SessionGroup } from "@/lib/groupByPhone";
 import { AlertTriangle } from "lucide-react";
-
-function truncate(s: string, n = 68) {
-  if (!s) return "";
-  const clean = s.replace(/\s+/g, " ").trim();
-  return clean.length > n ? clean.slice(0, n).trimEnd() + "…" : clean;
-}
+import { truncate } from "../utils/functions";
 
 export default function SessionGroupItem({
   g,
@@ -21,7 +16,7 @@ export default function SessionGroupItem({
   onSelect: (phone: string) => void;
   unread?: number;
   preview?: { text: string; date: string } | null;
-  needsHuman?: boolean; // <— NUEVO
+  needsHuman?: boolean;
 }) {
   return (
     <button

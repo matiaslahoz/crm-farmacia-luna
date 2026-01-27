@@ -35,7 +35,6 @@ export function usePedidosPage() {
 
     const { data, error } = await query.returns<PedidoRowJoined[]>();
     if (error) {
-      // si falla, dejamos la lista vacía
       setRows([]);
       setHasNext(false);
       setLoading(false);

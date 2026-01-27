@@ -1,6 +1,6 @@
-export type Period = "day" | "week" | "month" | "year";
+import { Options, Period } from "@/app/(privado)/dashboard/types/types";
 
-const options: { key: Period; label: string }[] = [
+const options: Options[] = [
   { key: "day", label: "Días" },
   { key: "week", label: "Semanas" },
   { key: "month", label: "Meses" },

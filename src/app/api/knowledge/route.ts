@@ -47,7 +47,7 @@ function toDocxBufferFromText(text: string): Promise<Buffer> {
     (line) =>
       new Paragraph({
         children: [new TextRun(line)],
-      })
+      }),
   );
   const doc = new Document({
     sections: [{ properties: {}, children: paras }],
@@ -67,7 +67,7 @@ function extractSheetIdFromUrl(url: string): string {
   const m = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
   if (!m)
     throw new Error(
-      "No se pudo extraer spreadsheetId de GOOGLE_SHEETS_SYNONYMS_CSV"
+      "No se pudo extraer spreadsheetId de GOOGLE_SHEETS_SYNONYMS_CSV",
     );
   return m[1];
 }
@@ -173,7 +173,7 @@ function getSheetsClient() {
       console.error("[GSA] jsonError:", (e1 as Error)?.message);
       console.error("[GSA] b64Error:", (e2 as Error)?.message);
       throw new Error(
-        "GOOGLE_SERVICE_ACCOUNT_KEY inválida: no es JSON ni base64 válido"
+        "GOOGLE_SERVICE_ACCOUNT_KEY inválida: no es JSON ni base64 válido",
       );
     }
   }
@@ -220,13 +220,13 @@ export async function GET(req: NextRequest) {
     if (mime === "application/vnd.google-apps.document") {
       const exp = await drive.files.export(
         { fileId, mimeType: "text/plain" },
-        { responseType: "arraybuffer" }
+        { responseType: "arraybuffer" },
       );
       text = Buffer.from(exp.data as ArrayBuffer).toString("utf8");
     } else {
       const res = await drive.files.get(
         { fileId, alt: "media", supportsAllDrives: true },
-        { responseType: "arraybuffer" }
+        { responseType: "arraybuffer" },
       );
       const buffer = Buffer.from(res.data as ArrayBuffer);
       const mammoth = await import("mammoth");
@@ -264,7 +264,7 @@ export async function POST(req: NextRequest) {
           const m = editUrl.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
           if (!m)
             throw new Error(
-              "GOOGLE_SHEETS_SYNONYMS_CSV inválida (no encuentro spreadsheetId)"
+              "GOOGLE_SHEETS_SYNONYMS_CSV inválida (no encuentro spreadsheetId)",
             );
           const spreadsheetId = m[1];
           await sheets.spreadsheets.get({
@@ -279,7 +279,7 @@ export async function POST(req: NextRequest) {
             {
               status: 200,
               headers: { "Content-Type": "application/json" },
-            }
+            },
           );
         } catch (e: unknown) {
           return new Response(
@@ -287,7 +287,7 @@ export async function POST(req: NextRequest) {
             {
               status: 500,
               headers: { "Content-Type": "application/json" },
-            }
+            },
           );
         }
       }
@@ -304,7 +304,7 @@ export async function POST(req: NextRequest) {
       const m = editUrl.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
       if (!m)
         throw new Error(
-          "GOOGLE_SHEETS_SYNONYMS_CSV inválida (no encuentro spreadsheetId)"
+          "GOOGLE_SHEETS_SYNONYMS_CSV inválida (no encuentro spreadsheetId)",
         );
       const spreadsheetId = m[1];
 
@@ -315,7 +315,7 @@ export async function POST(req: NextRequest) {
           {
             status: 400,
             headers: { "Content-Type": "application/json" },
-          }
+          },
         );
       }
 

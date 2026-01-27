@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabaseClient";
 import type { Session, Chat } from "@/lib/types";
 import { groupByPhone, type SessionGroup } from "@/lib/groupByPhone";
 import useUnreadCounts from "@/hooks/useUnreadCounts";
-import { uniqSortByIdDesc } from "../utils/uniqSortByIdDesc";
+import { uniqSortByIdDesc } from "../utils/functions";
 
 const PAGE_SIZE = 50;
 
@@ -63,18 +63,18 @@ export function useChatsPage({ breakpoint = 640, sessionsLimit = 400 } = {}) {
 
   const groups: SessionGroup[] = useMemo(
     () => groupByPhone(sessions),
-    [sessions]
+    [sessions],
   );
 
   const currentGroup = useMemo(
     () =>
       selectedPhone ? groups.find((g) => g.phone === selectedPhone) : undefined,
-    [groups, selectedPhone]
+    [groups, selectedPhone],
   );
 
   const currentIds = useMemo(
     () => currentGroup?.sessions.map((s) => s.id) ?? [],
-    [currentGroup]
+    [currentGroup],
   );
 
   useEffect(() => {
@@ -109,7 +109,7 @@ export function useChatsPage({ breakpoint = 640, sessionsLimit = 400 } = {}) {
             g.phone,
             row ? { text: row.message ?? "", date: row.date } : null,
           ] as const;
-        })
+        }),
       );
 
       if (!cancelled) setLastPreview(Object.fromEntries(entries));
@@ -133,17 +133,24 @@ export function useChatsPage({ breakpoint = 640, sessionsLimit = 400 } = {}) {
     (async () => {
       setLoadingMsgs(true);
 
-      const { count } = await supabase
-        .from("chats")
-        .select("id", { count: "exact", head: true })
-        .in("session_id", currentIds);
+      const [{ count, error: countError }, { data, error: dataError }] =
+        await Promise.all([
+          supabase
+            .from("chats")
+            .select("id", { count: "exact", head: true })
+            .in("session_id", currentIds),
+          supabase
+            .from("chats")
+            .select("id,date,type,message,session_id")
+            .in("session_id", currentIds)
+            .order("id", { ascending: false })
+            .range(0, PAGE_SIZE - 1),
+        ]);
 
-      const { data } = await supabase
-        .from("chats")
-        .select("id,date,type,message,session_id")
-        .in("session_id", currentIds)
-        .order("id", { ascending: false })
-        .range(0, PAGE_SIZE - 1);
+      if (countError || dataError) {
+        console.error("Error al cargar mensajes:", countError, dataError);
+        return;
+      }
 
       if (cancelled) return;
 
@@ -177,8 +184,8 @@ export function useChatsPage({ breakpoint = 640, sessionsLimit = 400 } = {}) {
       if (toClear.length) {
         setSessions((prev) =>
           prev.map((s) =>
-            toClear.includes(s.id) ? { ...s, requires_human: false } : s
-          )
+            toClear.includes(s.id) ? { ...s, requires_human: false } : s,
+          ),
         );
 
         await supabase
@@ -187,7 +194,7 @@ export function useChatsPage({ breakpoint = 640, sessionsLimit = 400 } = {}) {
           .in("id", toClear);
       }
     },
-    [groups, markRead]
+    [groups, markRead],
   );
 
   const loadMore = useCallback(async () => {
@@ -210,7 +217,7 @@ export function useChatsPage({ breakpoint = 640, sessionsLimit = 400 } = {}) {
       .range(start, end);
 
     setMsgs((prev) =>
-      uniqSortByIdDesc([...(prev || []), ...((data as Chat[]) || [])])
+      uniqSortByIdDesc([...(prev || []), ...((data as Chat[]) || [])]),
     );
 
     const fetched = data?.length || 0;
