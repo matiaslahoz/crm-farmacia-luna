@@ -32,7 +32,7 @@ export default function StatsGrid({
         accentClass="bg-emerald-100 text-emerald-700"
       />
       <StatCard
-        title="Requieren acción"
+        title="Pedidos que requieren atención"
         value={needsHuman}
         hint="derivadas a humano"
         icon={<AlertTriangle className="h-5 w-5" />}

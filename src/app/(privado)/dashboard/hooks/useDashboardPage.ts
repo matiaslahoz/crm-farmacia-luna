@@ -3,8 +3,8 @@ import { supabase } from "@/lib/supabaseClient";
 import { formatDayLabel, formatMonthLabel } from "@/lib/format";
 import type {
   Period,
-  SessionsCardsRow,
-  SessionsChartRow,
+  ChatsCardsRow,
+  ChatsChartRow,
   ChartPoint,
 } from "@/app/(privado)/dashboard/types/types";
 import { addDays, endOfDay, localDateKey, startOfDay } from "@/lib/dates";
@@ -60,7 +60,7 @@ export default function useDashboardPage(period: Period) {
         setNewNumbersToday(0);
         setNeedsHuman(0);
       } else {
-        const row = (cardsData as SessionsCardsRow[] | null)?.[0];
+        const row = (cardsData as ChatsCardsRow[] | null)?.[0];
         setTodayConvos(Number(row?.today_convos ?? 0));
         setNewNumbersToday(Number(row?.new_numbers_today ?? 0));
         setNeedsHuman(Number(row?.requires_human ?? 0));
@@ -94,7 +94,7 @@ export default function useDashboardPage(period: Period) {
         return;
       }
 
-      const rows = (data as SessionsChartRow[] | null) ?? [];
+      const rows = (data as ChatsChartRow[] | null) ?? [];
 
       if (period === "day") {
         const map = new Map<number, number>();

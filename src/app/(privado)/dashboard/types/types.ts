@@ -7,14 +7,14 @@ export type Options = {
   label: string;
 };
 
-export type SessionsCardsRow = {
+export type ChatsCardsRow = {
   today_convos: number | string | null;
   new_numbers_today: number | string | null;
   requires_human: number | string | null;
   orders_today: number | string | null;
 };
 
-export type SessionsChartRow = {
+export type ChatsChartRow = {
   bucket: string;
   value: number | string;
 };

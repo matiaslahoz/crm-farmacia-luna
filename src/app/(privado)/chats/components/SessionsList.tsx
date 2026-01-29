@@ -3,62 +3,50 @@
 import { useMemo } from "react";
 import { Search } from "lucide-react";
 import SessionGroupItem from "./SessionGroupItem";
-import type { SessionGroup } from "@/lib/groupByPhone";
+import type { ChatGroup } from "@/lib/types";
 
 export default function SessionsList({
   groups,
-  selectedPhone,
+  selectedUserId,
   query,
   setQuery,
   onSelect,
-  unreadCounts = {},
-  lastPreview = {},
+  unreadCounts,
 }: {
-  groups: SessionGroup[];
-  selectedPhone: string | null;
+  groups: ChatGroup[];
+  selectedUserId: number | null;
   query: string;
   setQuery: (q: string) => void;
-  onSelect: (phone: string) => void;
-  unreadCounts?: Record<string, number>;
-  lastPreview?: Record<string, { text: string; date: string } | null>;
+  onSelect: (userId: number) => void;
+  unreadCounts: Record<number, number>;
 }) {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return groups;
     return groups.filter(
       (g) =>
-        (g.name || "").toLowerCase().includes(q) ||
-        g.phone.includes(q) ||
-        (g.latest?.status || "").toLowerCase().includes(q)
+        (g.name || "").toLowerCase().includes(q) || (g.phone || "").includes(q),
     );
   }, [query, groups]);
 
-  const getLastDate = (g: SessionGroup): number => {
-    const fromPreview = lastPreview[g.phone]?.date;
-    const fromLatest = g?.latest?.date;
-    const fromSessions =
-      Array.isArray(g.sessions) && g.sessions.length
-        ? g.sessions[g.sessions.length - 1]?.date
-        : undefined;
-
-    const candidate = fromPreview ?? fromLatest ?? fromSessions ?? null;
-
-    const ts = candidate ? Date.parse(candidate) : NaN;
-    return Number.isNaN(ts) ? 0 : ts;
-  };
-
   const sorted = useMemo(() => {
-    return [...filtered].sort((a, b) => getLastDate(b) - getLastDate(a));
-  }, [filtered, lastPreview]);
+    return [...filtered].sort(
+      (a, b) =>
+        new Date(b.latest.date).getTime() - new Date(a.latest.date).getTime(),
+    );
+  }, [filtered]);
 
   return (
-    <div className="rounded-2xl bg-white border border-gray-200 overflow-hidden flex flex-col h-full min-h-0">
-      <div className="p-3 border-b border-gray-200 sticky top-0 bg-white">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
+    <div className="flex flex-col h-full min-h-0 bg-white border-r border-gray-100">
+      <div className="p-4 border-b border-gray-50/50 sticky top-0 bg-white/80 backdrop-blur-md z-10">
+        <h2 className="text-xl font-bold text-gray-800 mb-4 tracking-tight">
+          Mensajes
+        </h2>
+        <div className="relative group">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400 group-focus-within:text-[var(--primary)] transition-colors" />
           <input
-            placeholder="Buscar por nombre, teléfono o status…"
-            className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-gray-200 text-sm outline-none focus:border-gray-900"
+            placeholder="Buscar por nombre o teléfono…"
+            className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-gray-50 border-none ring-1 ring-transparent focus:ring-[var(--primary)]/20 focus:bg-white transition-all text-sm outline-none placeholder:text-gray-400"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -67,16 +55,13 @@ export default function SessionsList({
 
       <div className="flex-1 overflow-auto min-h-0">
         {sorted.map((g) => {
-          const needsHuman = g.sessions.some((s) => !!s.requires_human);
           return (
             <SessionGroupItem
-              key={g.phone}
+              key={g.user_id}
               g={g}
-              active={selectedPhone === g.phone}
+              active={selectedUserId === g.user_id}
               onSelect={onSelect}
-              unread={unreadCounts[g.phone] || 0}
-              preview={lastPreview[g.phone] || null}
-              needsHuman={needsHuman}
+              unreadCount={unreadCounts[g.user_id] || 0}
             />
           );
         })}

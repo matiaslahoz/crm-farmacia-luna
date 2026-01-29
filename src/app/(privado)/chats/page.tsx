@@ -9,20 +9,17 @@ export default function ChatsPage() {
     isMobile,
     query,
     setQuery,
-    selectedPhone,
-    setSelectedPhone,
+    selectedUserId,
+    handleSelectUser,
     groups,
     currentGroup,
-    lastPreview,
-    unreadCounts,
     title,
-    meta,
     msgsDisplay,
     loadingMsgs,
     hasMore,
     loadMore,
-    handleSelectPhone,
-  } = useChatsPage({ breakpoint: 640, sessionsLimit: 400 });
+    unreadCounts,
+  } = useChatsPage({ breakpoint: 640, chatsLimit: 400 });
 
   return (
     <div className="flex h-full min-h-0 w-full">
@@ -37,34 +34,32 @@ export default function ChatsPage() {
           top: isMobile ? 56 : undefined,
           height: isMobile ? "calc(100dvh - 56px)" : "100%",
           transform:
-            isMobile && selectedPhone ? "translateX(-100%)" : "translateX(0)",
+            isMobile && selectedUserId ? "translateX(-100%)" : "translateX(0)",
         }}
       >
         <SessionsList
           groups={groups}
-          selectedPhone={selectedPhone}
+          selectedUserId={selectedUserId}
           query={query}
           setQuery={setQuery}
-          onSelect={handleSelectPhone}
+          onSelect={handleSelectUser}
           unreadCounts={unreadCounts}
-          lastPreview={lastPreview}
         />
       </div>
 
       <div
         className={`flex-1 min-w-0 h-full relative bg-gray-50 ${
-          isMobile && !selectedPhone ? "hidden" : "block"
+          isMobile && !selectedUserId ? "hidden" : "block"
         }`}
       >
         <Conversation
           title={title}
           phone={currentGroup?.phone}
-          meta={meta}
           msgs={msgsDisplay}
           loading={loadingMsgs}
           hasMore={hasMore}
           onLoadMore={loadMore}
-          onBack={isMobile ? () => setSelectedPhone(null) : undefined}
+          onBack={isMobile ? () => handleSelectUser(0) : undefined}
         />
       </div>
     </div>

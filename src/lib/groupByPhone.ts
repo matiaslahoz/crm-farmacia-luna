@@ -1,34 +1,29 @@
-import type { Session } from "@/lib/types";
-import { normalizePhone } from "./phone";
+import { Chat, ChatGroup } from "./types";
 
-export type SessionGroup = {
-  phone: string; // normalizado
-  name: string | null; // mejor nombre disponible
-  sessions: Session[]; // todas las sesiones de ese phone (desc por fecha)
-  latest: Session; // la más reciente
-};
+export function groupByUserId(chats: Chat[]): ChatGroup[] {
+  const map = new Map<number, Chat[]>();
 
-export function groupByPhone(sessions: Session[]): SessionGroup[] {
-  const map = new Map<string, Session[]>();
-
-  for (const s of sessions) {
-    const key = normalizePhone(s.phone);
+  for (const s of chats) {
+    const key = s.user_id;
     const arr = map.get(key) ?? [];
     arr.push(s);
     map.set(key, arr);
   }
 
-  const groups: SessionGroup[] = [];
-  for (const [phone, arr] of map) {
+  const groups: ChatGroup[] = [];
+  for (const [userId, arr] of map) {
     arr.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     const latest = arr[0];
-    const name = latest.name ?? arr.find((x) => x.name)?.name ?? null;
-    groups.push({ phone, name, sessions: arr, latest });
+    const user = latest.users;
+    const name = user?.real_name || user?.display_name || "Sin Nombre";
+    const phone = user?.phone;
+
+    groups.push({ user_id: userId, name, phone, chats: arr, latest });
   }
 
   groups.sort(
     (a, b) =>
-      new Date(b.latest.date).getTime() - new Date(a.latest.date).getTime()
+      new Date(b.latest.date).getTime() - new Date(a.latest.date).getTime(),
   );
   return groups;
 }

@@ -6,13 +6,16 @@ import {
 } from "../utils/functions";
 import { parsePedido, countItems } from "@/lib/pedido";
 import { formatCurrency } from "@/lib/currency";
+import { User } from "lucide-react";
 
 export default function DesktopTable({
   rows,
   onOpen,
+  updateStatus,
 }: {
   rows: UiOrder[];
   onOpen: (row: UiOrder) => void;
+  updateStatus: (id: number, status: string) => void;
 }) {
   return (
     <div className="hidden md:block rounded-2xl bg-white border border-gray-200 overflow-hidden">
@@ -23,6 +26,7 @@ export default function DesktopTable({
             <th className="px-4 py-3 text-left font-medium">Cliente</th>
             <th className="px-4 py-3 text-left font-medium">Teléfono</th>
             <th className="px-4 py-3 text-left font-medium">Fecha</th>
+            <th className="px-4 py-3 text-left font-medium">Estado</th>
             <th className="px-4 py-3 text-center font-medium">Artículos</th>
             <th className="px-4 py-3 text-right font-medium">Total</th>
             <th className="px-4 py-3"></th>
@@ -69,6 +73,60 @@ export default function DesktopTable({
                     {formatRelativeDate(r.created_at)}
                   </div>
                 </td>
+                <td className="px-4 py-3 text-center">
+                  <div
+                    className="flex items-center justify-center gap-1 bg-gray-100/50 p-1 rounded-lg border border-gray-200/60 w-fit mx-auto"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {/* Pendiente */}
+                    <button
+                      onClick={() => updateStatus(r.id, "PENDING")}
+                      className={`
+                        px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide transition-all
+                        ${
+                          (r.status || "PENDING") === "PENDING"
+                            ? "bg-yellow-100 text-yellow-700 shadow-sm ring-1 ring-yellow-200"
+                            : "text-gray-400 hover:text-yellow-600 hover:bg-yellow-50"
+                        }
+                      `}
+                      title="Pendiente"
+                    >
+                      Pendiente
+                    </button>
+
+                    {/* Completado */}
+                    <button
+                      onClick={() => updateStatus(r.id, "COMPLETED")}
+                      className={`
+                        px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide transition-all
+                        ${
+                          r.status === "COMPLETED"
+                            ? "bg-green-100 text-green-700 shadow-sm ring-1 ring-green-200"
+                            : "text-gray-400 hover:text-green-600 hover:bg-green-50"
+                        }
+                      `}
+                      title="Confirmado"
+                    >
+                      Confirmado
+                    </button>
+
+                    {/* Cancelado */}
+                    <button
+                      onClick={() => updateStatus(r.id, "CANCELLED")}
+                      className={`
+                        px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide transition-all
+                        ${
+                          r.status === "CANCELLED"
+                            ? "bg-red-100 text-red-700 shadow-sm ring-1 ring-red-200"
+                            : "text-gray-400 hover:text-red-600 hover:bg-red-50"
+                        }
+                      `}
+                      title="Cancelado"
+                    >
+                      Cancelado
+                    </button>
+                  </div>
+                </td>
                 <td className="px-4 py-3 text-center text-gray-600">
                   {countItems(items)}
                 </td>
@@ -88,8 +146,13 @@ export default function DesktopTable({
           })}
           {rows.length === 0 && (
             <tr>
-              <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
-                No hay pedidos.
+              <td colSpan={8} className="px-4 py-12 text-center">
+                <div className="flex flex-col items-center gap-2 text-gray-400">
+                  <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
+                    <User className="w-6 h-6" />
+                  </div>
+                  <span>No hay pedidos para mostrar</span>
+                </div>
               </td>
             </tr>
           )}

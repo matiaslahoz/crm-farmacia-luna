@@ -5,6 +5,7 @@ import OrderDrawer from "@/app/(privado)/pedidos/components/OrderDrawer";
 import { usePedidosPage } from "./hooks/usePedidosPage";
 import DesktopFilters from "./components/DesktopFilters";
 import MobileFilters from "./components/MobileFilters";
+import { ShoppingBag } from "lucide-react";
 
 export default function PedidosPage() {
   const {
@@ -24,10 +25,26 @@ export default function PedidosPage() {
     current,
     hasNext,
     open,
+    updateStatus,
   } = usePedidosPage();
 
   return (
     <div className="h-full flex flex-col min-h-0 gap-4">
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <div className="p-3 bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl shadow-lg shadow-purple-500/20 text-white">
+          <ShoppingBag className="size-6" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+            Pedidos
+          </h1>
+          <p className="text-slate-500 text-sm font-medium">
+            Gestión y seguimiento de pedidos
+          </p>
+        </div>
+      </div>
+
       <div className="rounded-2xl bg-white border border-gray-200 p-4 sticky top-0 z-10">
         <DesktopFilters
           q={q}
@@ -66,6 +83,7 @@ export default function PedidosPage() {
             setCurrent(row);
             setOpen(true);
           }}
+          updateStatus={updateStatus}
         />
       </div>
 

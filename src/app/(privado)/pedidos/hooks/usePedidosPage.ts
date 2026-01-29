@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { PedidoRowJoined, UiOrder } from "../types/types";
+import { UiOrder } from "../types/types";
 import { filterClient } from "../utils/functions";
 import { endOfDayISO } from "@/lib/dates";
 
@@ -26,14 +26,14 @@ export function usePedidosPage() {
 
     let query = supabase
       .from("orders_crm")
-      .select("id,created_at,total,items,name, phone")
+      .select("id,created_at,total,items,name,phone,status")
       .order("created_at", { ascending: false })
       .range(offset, end);
 
     if (from) query = query.gte("created_at", from);
     if (to) query = query.lte("created_at", endOfDayISO(to));
 
-    const { data, error } = await query.returns<PedidoRowJoined[]>();
+    const { data, error } = await query.returns<UiOrder[]>();
     if (error) {
       setRows([]);
       setHasNext(false);
@@ -47,12 +47,28 @@ export function usePedidosPage() {
       items: d.items,
       name: d.name ?? null,
       phone: d.phone ?? null,
+      status: d.status,
     }));
 
     setRows(mapped);
     setHasNext((data ?? []).length === PAGE_SIZE);
     setLoading(false);
   }
+
+  const updateStatus = useCallback(async (id: number, status: string) => {
+    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
+
+    console.log(id);
+
+    const { error } = await supabase
+      .from("orders")
+      .update({ status })
+      .eq("id", id);
+
+    if (error) {
+      console.error("Error updating status:", error);
+    }
+  }, []);
 
   useEffect(() => {
     void load();
@@ -78,5 +94,6 @@ export function usePedidosPage() {
     current,
     setCurrent,
     load,
+    updateStatus,
   };
 }

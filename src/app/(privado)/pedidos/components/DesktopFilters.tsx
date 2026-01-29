@@ -20,9 +20,9 @@ export default function DesktopFilters({
   onApply: () => void;
 }) {
   return (
-    <div className="hidden md:flex items-center gap-3">
+    <div className="hidden md:flex items-center gap-4">
       {/* Search with icon */}
-      <div className="relative flex-1 max-w-sm">
+      <div className="relative flex-1 max-w-lg">
         <svg
           className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
           fill="none"

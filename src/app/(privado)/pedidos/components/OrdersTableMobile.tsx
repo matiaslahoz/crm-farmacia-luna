@@ -7,12 +7,14 @@ import {
 } from "../utils/functions";
 import { formatCurrency } from "@/lib/currency";
 
-export function MobileCards({
+export function MobileTable({
   rows,
   onOpen,
+  updateStatus,
 }: {
   rows: UiOrder[];
   onOpen: (row: UiOrder) => void;
+  updateStatus: (id: number, status: string) => void;
 }) {
   return (
     <div className="md:hidden space-y-4">
@@ -43,9 +45,59 @@ export function MobileCards({
                   <div className="text-sm text-gray-500">{r.phone || "—"}</div>
                 </div>
               </div>
-              <span className="px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-700 border border-green-200">
-                Completado
-              </span>
+
+              <div
+                className="flex items-center gap-1 bg-gray-100/50 p-1 rounded-lg border border-gray-200/60 shrink-0"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Pendiente */}
+                <button
+                  onClick={() => updateStatus(r.id, "PENDING")}
+                  className={`
+                    w-6 h-6 rounded flex items-center justify-center transition-all
+                    ${
+                      (r.status || "PENDING") === "PENDING"
+                        ? "bg-yellow-100 text-yellow-700 shadow-sm ring-1 ring-yellow-200"
+                        : "text-gray-400 hover:text-yellow-600 hover:bg-yellow-50"
+                    }
+                  `}
+                  title="Pendiente"
+                >
+                  <span className="text-[10px] font-bold">P</span>
+                </button>
+
+                {/* Completado */}
+                <button
+                  onClick={() => updateStatus(r.id, "COMPLETED")}
+                  className={`
+                    w-6 h-6 rounded flex items-center justify-center transition-all
+                    ${
+                      r.status === "COMPLETED"
+                        ? "bg-green-100 text-green-700 shadow-sm ring-1 ring-green-200"
+                        : "text-gray-400 hover:text-green-600 hover:bg-green-50"
+                    }
+                  `}
+                  title="Confirmado"
+                >
+                  <span className="text-[10px] font-bold">C</span>
+                </button>
+
+                {/* Cancelado */}
+                <button
+                  onClick={() => updateStatus(r.id, "CANCELLED")}
+                  className={`
+                    w-6 h-6 rounded flex items-center justify-center transition-all
+                    ${
+                      r.status === "CANCELLED"
+                        ? "bg-red-100 text-red-700 shadow-sm ring-1 ring-red-200"
+                        : "text-gray-400 hover:text-red-600 hover:bg-red-50"
+                    }
+                  `}
+                  title="Cancelado"
+                >
+                  <span className="text-[10px] font-bold">X</span>
+                </button>
+              </div>
             </div>
 
             {/* Order ID and Date */}

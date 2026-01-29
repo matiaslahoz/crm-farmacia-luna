@@ -1,54 +1,71 @@
-import SessionAvatar from "./SessionAvatar";
-import type { SessionGroup } from "@/lib/groupByPhone";
-import { AlertTriangle } from "lucide-react";
 import { truncate } from "../utils/functions";
+import SessionAvatar from "./SessionAvatar";
+import type { ChatGroup } from "@/lib/types";
 
 export default function SessionGroupItem({
   g,
   active,
   onSelect,
-  unread = 0,
-  preview = null,
-  needsHuman = false,
+  unreadCount = 0,
 }: {
-  g: SessionGroup;
+  g: ChatGroup;
   active: boolean;
-  onSelect: (phone: string) => void;
-  unread?: number;
-  preview?: { text: string; date: string } | null;
-  needsHuman?: boolean;
+  onSelect: (userId: number) => void;
+  unreadCount?: number;
 }) {
   return (
     <button
-      onClick={() => onSelect(g.phone)}
-      className={`relative w-full flex cursor-pointer items-center gap-3 px-3 py-3 text-left hover:bg-gray-50
-                  border-l-4 ${needsHuman ? "border-amber-500" : "border-transparent"}
-                  ${active ? "bg-gray-50" : ""}`}
-      title={needsHuman ? "Requiere intervención humana" : undefined}
+      onClick={() => onSelect(g.user_id)}
+      className={`group relative w-full flex cursor-pointer items-center gap-3 px-4 py-3 text-left transition-all duration-200
+                  ${
+                    active
+                      ? "bg-blue-50/50 before:absolute before:left-0 before:top-3 before:bottom-3 before:w-1 before:bg-blue-500 before:rounded-r-full"
+                      : "hover:bg-gray-50"
+                  }
+                  ${g.hasPendingOrder ? "border-l-4 border-l-yellow-400 !px-[13px]" : ""}
+                  `}
     >
-      <div className="relative">
-        <SessionAvatar name={g.name} phone={g.phone} />
-        {needsHuman && (
-          <span className="absolute -left-1 -top-1 bg-amber-500 text-white rounded-full p-0.5">
-            <AlertTriangle className="size-3" />
-          </span>
-        )}
+      <div className="relative shrink-0">
+        <SessionAvatar
+          name={g.name}
+          phone={g.phone ?? g.user_id.toString()}
+          size={42}
+        />
       </div>
 
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <div className="truncate font-medium">{g.name || g.phone}</div>
-          <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">
-            {g.sessions.length}×
+      <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+        <div className="flex items-center justify-between gap-2">
+          <span
+            className={`truncate text-sm font-semibold ${active ? "text-gray-900" : "text-gray-700 group-hover:text-gray-900"}`}
+          >
+            {g.name || g.phone || "Usuario " + g.user_id}
           </span>
-          {unread > 0 && (
-            <span className="ml-auto inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-blue-600 text-white text-[10px] font-semibold">
-              {unread > 99 ? "99+" : unread}
+          {g.hasPendingOrder ? (
+            <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700 border border-yellow-200 animate-pulse">
+              Pedido pendiente
             </span>
+          ) : (
+            g.chats.length > 0 && (
+              <span className="text-[10px] text-gray-400 tabular-nums">
+                {new Date(g.latest.date).toLocaleDateString(undefined, {
+                  month: "short",
+                  day: "numeric",
+                })}
+              </span>
+            )
           )}
         </div>
-        <div className="text-xs text-gray-600 mt-1 truncate">
-          {preview ? truncate(preview.text) : "—"}
+        <div className="flex items-center justify-between gap-2">
+          <div
+            className={`text-xs truncate max-w-[85%] ${active ? "text-gray-600" : "text-gray-500 group-hover:text-gray-600"}`}
+          >
+            {truncate(g.latest.message ?? "Mensaje multimedia")}
+          </div>
+          {unreadCount > 0 && (
+            <span className="shrink-0 flex items-center justify-center min-w-[20px] h-[20px] px-1 text-[11px] font-bold rounded-full bg-green-500 text-white shadow-sm">
+              {unreadCount}
+            </span>
+          )}
         </div>
       </div>
     </button>

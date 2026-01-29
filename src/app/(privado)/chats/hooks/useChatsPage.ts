@@ -2,14 +2,19 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import type { Session, Chat } from "@/lib/types";
-import { groupByPhone, type SessionGroup } from "@/lib/groupByPhone";
-import useUnreadCounts from "@/hooks/useUnreadCounts";
+import type { Chat, ChatGroup, ChatRow as ChatRowType } from "@/lib/types";
+import { groupByUserId } from "@/lib/groupByPhone";
+import useUnreadMessages from "@/hooks/useUnreadMessages";
 import { uniqSortByIdDesc } from "../utils/functions";
 
 const PAGE_SIZE = 50;
 
-type PreviewMap = Record<string, { text: string; date: string } | null>;
+const normalizeChat = (c: ChatRowType): Chat => ({
+  ...c,
+  users: Array.isArray(c.users) ? c.users[0] : c.users,
+  type: c.type || undefined,
+  message: c.message || undefined,
+});
 
 function useIsMobile(breakpoint = 640) {
   const [isMobile, setIsMobile] = useState(false);
@@ -25,103 +30,89 @@ function useIsMobile(breakpoint = 640) {
   return isMobile;
 }
 
-export function useChatsPage({ breakpoint = 640, sessionsLimit = 400 } = {}) {
+export function useChatsPage({ breakpoint = 640, chatsLimit = 400 } = {}) {
   const isMobile = useIsMobile(breakpoint);
-  const [selectedPhone, setSelectedPhone] = useState<string | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [query, setQuery] = useState("");
-
-  const [sessions, setSessions] = useState<Session[]>([]);
-
-  const [lastPreview, setLastPreview] = useState<PreviewMap>({});
-
+  const [rawChats, setRawChats] = useState<Chat[]>([]);
   const [msgs, setMsgs] = useState<Chat[]>([]);
   const [loadingMsgs, setLoadingMsgs] = useState(false);
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(false);
 
-  const idsRef = useRef<number[]>([]);
   const loadingMoreRef = useRef(false);
 
   useEffect(() => {
     let alive = true;
-
     (async () => {
       const { data } = await supabase
-        .from("sessions")
-        .select("id,date,status,phone,requires_human,name")
+        .from("chats")
+        .select("id,date,type,message,user_id, users(*)")
         .order("date", { ascending: false })
-        .limit(sessionsLimit);
+        .limit(chatsLimit);
 
       if (!alive) return;
-      setSessions((data as Session[]) || []);
-    })();
 
+      const chats = ((data || []) as unknown as ChatRowType[]).map(
+        normalizeChat,
+      );
+
+      setRawChats(chats);
+    })();
     return () => {
       alive = false;
     };
-  }, [sessionsLimit]);
+  }, [chatsLimit]);
 
-  const groups: SessionGroup[] = useMemo(
-    () => groupByPhone(sessions),
-    [sessions],
+  const groupsWithoutOrders: ChatGroup[] = useMemo(
+    () => groupByUserId(rawChats),
+    [rawChats],
   );
+
+  const [pendingOrderUserIds, setPendingOrderUserIds] = useState<Set<number>>(
+    new Set(),
+  );
+
+  useEffect(() => {
+    if (groupsWithoutOrders.length === 0) return;
+
+    const userIds = groupsWithoutOrders.map((g) => g.user_id);
+
+    (async () => {
+      const { data } = await supabase
+        .from("orders_crm")
+        .select("user_id")
+        .eq("status", "PENDING")
+        .in("user_id", userIds);
+
+      if (data) {
+        const ids = new Set(
+          (data as { user_id: number }[]).map((o) => o.user_id),
+        );
+        setPendingOrderUserIds(ids);
+      }
+    })();
+  }, [groupsWithoutOrders.length]);
+
+  const groups = useMemo(() => {
+    return groupsWithoutOrders.map((g) => ({
+      ...g,
+      hasPendingOrder: pendingOrderUserIds.has(g.user_id),
+    }));
+  }, [groupsWithoutOrders, pendingOrderUserIds]);
+
+  const { unreadCounts, markAsRead } = useUnreadMessages(groups);
 
   const currentGroup = useMemo(
     () =>
-      selectedPhone ? groups.find((g) => g.phone === selectedPhone) : undefined,
-    [groups, selectedPhone],
-  );
-
-  const currentIds = useMemo(
-    () => currentGroup?.sessions.map((s) => s.id) ?? [],
-    [currentGroup],
+      selectedUserId
+        ? groups.find((g) => g.user_id === selectedUserId)
+        : undefined,
+    [groups, selectedUserId],
   );
 
   useEffect(() => {
-    idsRef.current = currentIds;
-  }, [currentIds]);
-
-  const { counts: unreadCounts, markRead } = useUnreadCounts(groups);
-
-  useEffect(() => {
-    if (!groups.length) {
-      setLastPreview({});
-      return;
-    }
-
-    let cancelled = false;
-
-    (async () => {
-      const entries = await Promise.all(
-        groups.map(async (g) => {
-          const ids = g.sessions.map((s) => s.id);
-          if (!ids.length) return [g.phone, null] as const;
-
-          const { data } = await supabase
-            .from("chats")
-            .select("message,date")
-            .in("session_id", ids)
-            .order("date", { ascending: false })
-            .limit(1);
-
-          const row = data?.[0] ?? null;
-          return [
-            g.phone,
-            row ? { text: row.message ?? "", date: row.date } : null,
-          ] as const;
-        }),
-      );
-
-      if (!cancelled) setLastPreview(Object.fromEntries(entries));
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [groups]);
-
-  useEffect(() => {
-    if (!currentIds.length) {
+    if (!selectedUserId) {
       setMsgs([]);
       setOffset(0);
       setHasMore(false);
@@ -129,77 +120,51 @@ export function useChatsPage({ breakpoint = 640, sessionsLimit = 400 } = {}) {
     }
 
     let cancelled = false;
-
     (async () => {
       setLoadingMsgs(true);
 
-      const [{ count, error: countError }, { data, error: dataError }] =
-        await Promise.all([
-          supabase
-            .from("chats")
-            .select("id", { count: "exact", head: true })
-            .in("session_id", currentIds),
-          supabase
-            .from("chats")
-            .select("id,date,type,message,session_id")
-            .in("session_id", currentIds)
-            .order("id", { ascending: false })
-            .range(0, PAGE_SIZE - 1),
-        ]);
+      const { count } = await supabase
+        .from("chats")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", selectedUserId);
 
-      if (countError || dataError) {
-        console.error("Error al cargar mensajes:", countError, dataError);
-        return;
-      }
+      const { data } = await supabase
+        .from("chats")
+        .select("id,date,type,message,user_id, users(*)")
+        .eq("user_id", selectedUserId)
+        .order("id", { ascending: false })
+        .range(0, PAGE_SIZE - 1);
 
       if (cancelled) return;
 
-      const initial = uniqSortByIdDesc((data as Chat[]) || []);
+      const chats = ((data || []) as unknown as ChatRowType[]).map(
+        normalizeChat,
+      );
+
+      const initial = uniqSortByIdDesc(chats);
       setMsgs(initial);
 
       const fetched = data?.length || 0;
       setOffset(fetched);
       setHasMore((count || 0) > fetched);
-
       setLoadingMsgs(false);
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [currentIds.join("|")]);
+  }, [selectedUserId]);
 
-  const handleSelectPhone = useCallback(
-    async (phone: string) => {
-      setSelectedPhone(phone);
-
-      markRead(phone);
-
-      const toClear =
-        groups
-          .find((g) => g.phone === phone)
-          ?.sessions.filter((s) => !!s.requires_human)
-          .map((s) => s.id) ?? [];
-
-      if (toClear.length) {
-        setSessions((prev) =>
-          prev.map((s) =>
-            toClear.includes(s.id) ? { ...s, requires_human: false } : s,
-          ),
-        );
-
-        await supabase
-          .from("sessions")
-          .update({ requires_human: false })
-          .in("id", toClear);
-      }
+  const handleSelectUser = useCallback(
+    (userId: number) => {
+      setSelectedUserId(userId);
+      markAsRead(userId);
     },
-    [groups, markRead],
+    [markAsRead],
   );
 
   const loadMore = useCallback(async () => {
-    const ids = idsRef.current;
-    if (!ids.length) return;
+    if (!selectedUserId) return;
     if (loadingMoreRef.current) return;
     if (!hasMore) return;
 
@@ -211,14 +176,14 @@ export function useChatsPage({ breakpoint = 640, sessionsLimit = 400 } = {}) {
 
     const { data } = await supabase
       .from("chats")
-      .select("id,date,type,message,session_id")
-      .in("session_id", ids)
+      .select("id,date,type,message,user_id, users(*)")
+      .eq("user_id", selectedUserId)
       .order("id", { ascending: false })
       .range(start, end);
 
-    setMsgs((prev) =>
-      uniqSortByIdDesc([...(prev || []), ...((data as Chat[]) || [])]),
-    );
+    const chats = ((data || []) as unknown as ChatRowType[]).map(normalizeChat);
+
+    setMsgs((prev) => uniqSortByIdDesc([...(prev || []), ...chats]));
 
     const fetched = data?.length || 0;
     setOffset(start + fetched);
@@ -226,16 +191,9 @@ export function useChatsPage({ breakpoint = 640, sessionsLimit = 400 } = {}) {
 
     setLoadingMsgs(false);
     loadingMoreRef.current = false;
-  }, [offset, hasMore]);
+  }, [offset, hasMore, selectedUserId]);
 
-  const title = currentGroup
-    ? currentGroup.name || currentGroup.phone
-    : undefined;
-
-  const meta =
-    currentGroup && currentGroup.sessions.length > 1
-      ? `${currentGroup.sessions.length} sesiones combinadas`
-      : undefined;
+  const title = currentGroup?.name || currentGroup?.phone;
 
   const msgsDisplay = useMemo(() => [...msgs].reverse(), [msgs]);
 
@@ -243,19 +201,15 @@ export function useChatsPage({ breakpoint = 640, sessionsLimit = 400 } = {}) {
     isMobile,
     query,
     setQuery,
-    selectedPhone,
-    setSelectedPhone,
-    sessions,
+    selectedUserId,
+    handleSelectUser,
     groups,
     currentGroup,
-    lastPreview,
-    unreadCounts,
     title,
-    meta,
     msgsDisplay,
     loadingMsgs,
     hasMore,
     loadMore,
-    handleSelectPhone,
+    unreadCounts,
   };
 }

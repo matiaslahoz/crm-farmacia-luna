@@ -2,39 +2,31 @@ export default function MessageBubble({
   own,
   text,
   time,
-  date,
 }: {
   own: boolean;
   text: string | null;
   time: string;
-  date: string;
 }) {
   return (
-    <div className={`flex ${own ? "justify-end" : "justify-start"}`}>
+    <div
+      className={`flex w-full ${own ? "justify-end" : "justify-start"} mb-2`}
+    >
       <div
-        className={`max-w-[70%] rounded-2xl px-3 py-2 text-[13px] leading-relaxed shadow-sm ${
-          own ? "bg-[#d9fdd3]" : "bg-white border border-gray-200"
-        }`}
+        className={`relative max-w-[75%] px-4 py-2.5 text-[14px] leading-relaxed shadow-sm transition-all
+          ${
+            own
+              ? "bg-blue-600 text-white rounded-2xl rounded-tr-none"
+              : "bg-white text-gray-800 border border-gray-100 rounded-2xl rounded-tl-none shadow-[0_2px_4px_rgba(0,0,0,0.02)]"
+          }
+        `}
       >
-        <div className="whitespace-pre-wrap">{text}</div>
+        <div className="whitespace-pre-wrap break-words">{text}</div>
         <div
-          className={`relative cursor-pointer group inline-block text-[10px] mt-1 ${
-            own ? "text-emerald-700/70" : "text-gray-500/80"
-          } text-right`}
+          className={`text-[10px] mt-1 text-right font-medium tracking-wide
+            ${own ? "text-blue-100/80" : "text-gray-400"}
+          `}
         >
           {time}
-
-          <div
-            className="
-              absolute bottom-full left-1 mb-1
-              hidden group-hover:block
-              bg-black text-white text-[12px]
-              px-2 py-1 rounded shadow
-              whitespace-nowrap
-            "
-          >
-            {date}
-          </div>
         </div>
       </div>
     </div>

@@ -7,10 +7,6 @@ export function initials(name?: string | null, phone?: number | string | null) {
   const s = String(phone ?? "");
   return s.slice(-2);
 }
-export function fmtTime(ts: string) {
-  const d = new Date(ts);
-  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-}
 
 export function formatDayLabel(d: Date) {
   return d.toLocaleDateString(undefined, { day: "2-digit", month: "2-digit" });
