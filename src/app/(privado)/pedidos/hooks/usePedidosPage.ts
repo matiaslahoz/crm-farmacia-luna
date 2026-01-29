@@ -58,8 +58,6 @@ export function usePedidosPage() {
   const updateStatus = useCallback(async (id: number, status: string) => {
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
 
-    console.log(id);
-
     const { error } = await supabase
       .from("orders")
       .update({ status })
