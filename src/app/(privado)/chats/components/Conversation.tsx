@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import type { Chat } from "@/lib/types";
+import { fmtTime, getConversationDateLabel } from "@/lib/dates";
 import ConversationHeader from "./ConversationHeader";
 import MessageBubble from "./MessageBubble";
-import { fmtTime } from "@/lib/dates";
 
 export default function Conversation({
   title,
@@ -16,7 +16,7 @@ export default function Conversation({
   onBack,
 }: {
   title?: string | null;
-  phone?: string | null;
+  phone?: number | string | null;
   msgs: Chat[];
   loading: boolean;
   hasMore: boolean;
@@ -26,6 +26,20 @@ export default function Conversation({
   const bottomRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const nearBottomRef = useRef(true);
+
+  const groupedMsgs = useMemo(() => {
+    const groups: { label: string; msgs: Chat[] }[] = [];
+    msgs.forEach((m) => {
+      const label = getConversationDateLabel(m.date);
+      const lastGroup = groups[groups.length - 1];
+      if (lastGroup && lastGroup.label === label) {
+        lastGroup.msgs.push(m);
+      } else {
+        groups.push({ label, msgs: [m] });
+      }
+    });
+    return groups;
+  }, [msgs]);
 
   useEffect(() => {
     if (nearBottomRef.current)
@@ -42,7 +56,6 @@ export default function Conversation({
       if (el.scrollTop < 60 && hasMore && !loading) {
         const prevHeight = el.scrollHeight;
         onLoadMore();
-        // mantener posición visual tras prepending
         setTimeout(() => {
           const newHeight = el.scrollHeight;
           el.scrollTop = newHeight - prevHeight;
@@ -53,7 +66,7 @@ export default function Conversation({
     return () => el.removeEventListener("scroll", onScroll);
   }, [hasMore, loading, onLoadMore]);
 
-  const hasSelection = !!phone;
+  const hasSelection = !!title;
 
   return (
     <div className="flex flex-col h-full overflow-hidden bg-white/50 backdrop-blur-sm relative">
@@ -63,6 +76,8 @@ export default function Conversation({
         ref={listRef}
         className="flex-1 overflow-auto px-4 py-6 space-y-4 bg-slate-50 relative scroll-smooth"
       >
+        {/* Optional: Add a subtle background pattern or gradient here if desired */}
+
         {!hasSelection && (
           <div className="flex flex-col items-center justify-center h-full text-gray-400 space-y-4">
             <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center">
@@ -81,13 +96,24 @@ export default function Conversation({
         )}
 
         {hasSelection &&
-          msgs.map((m) => (
-            <MessageBubble
-              key={m.id}
-              own={m.type === "ia"}
-              text={m.message ?? ""}
-              time={fmtTime(m.date)}
-            />
+          groupedMsgs.map((group) => (
+            <div key={group.label} className="relative">
+              <div className="sticky top-2 z-10 flex justify-center py-4 pointer-events-none">
+                <span className="bg-gray-200/80 backdrop-blur-md text-gray-600 text-xs font-medium px-3 py-1 rounded-full shadow-sm border border-white/50">
+                  {group.label}
+                </span>
+              </div>
+              <div className="flex flex-col space-y-4">
+                {group.msgs.map((m) => (
+                  <MessageBubble
+                    key={m.id}
+                    own={m.type === "ia"}
+                    text={m.message ?? ""}
+                    time={fmtTime(m.date)}
+                  />
+                ))}
+              </div>
+            </div>
           ))}
 
         <div ref={bottomRef} />
@@ -98,7 +124,7 @@ export default function Conversation({
           <div className="flex-1 bg-gray-100/70 hover:bg-gray-100 transition-colors rounded-2xl flex items-center px-4 py-2 border border-transparent focus-within:border-gray-200 focus-within:bg-white focus-within:ring-2 focus-within:ring-[var(--primary)]/10">
             <input
               disabled
-              placeholder="Escribí un mensaje..."
+              placeholder="Escribí un mensaje..." // Removed "solo lectura" to look cleaner, user knows it's read only if disabled effectively or just for UI
               className="w-full bg-transparent border-none text-sm focus:ring-0 placeholder:text-gray-400 text-gray-700 disabled:cursor-not-allowed"
             />
           </div>

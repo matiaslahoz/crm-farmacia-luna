@@ -1,3 +1,4 @@
+import { formatChatDate } from "@/lib/dates";
 import { truncate } from "../utils/functions";
 import SessionAvatar from "./SessionAvatar";
 import type { ChatGroup } from "@/lib/types";
@@ -47,10 +48,7 @@ export default function SessionGroupItem({
           ) : (
             g.chats.length > 0 && (
               <span className="text-[10px] text-gray-400 tabular-nums">
-                {new Date(g.latest.date).toLocaleDateString(undefined, {
-                  month: "short",
-                  day: "numeric",
-                })}
+                {formatChatDate(g.latest?.date)}
               </span>
             )
           )}

@@ -53,3 +53,64 @@ export function endOfDayISO(d: string): string {
 export function isSameDay(a: Date, b: Date) {
   return startOfDay(a).getTime() === startOfDay(b).getTime();
 }
+
+export function isYesterday(d: Date) {
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  return startOfDay(d).getTime() === startOfDay(yesterday).getTime();
+}
+
+export function formatChatDate(
+  input: Date | string | number | null | undefined,
+): string {
+  if (!input) return "";
+  const d = new Date(input);
+  if (Number.isNaN(d.getTime())) return "";
+
+  const now = new Date();
+
+  // Si es hoy, mostrar hora HH:mm
+  if (isSameDay(d, now)) {
+    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  }
+
+  // Si es ayer, mostrar "Ayer"
+  if (isYesterday(d)) {
+    return "Ayer";
+  }
+
+  // Si es este año, mostrar "d MMM" (ej: 28 ene)
+  if (d.getFullYear() === now.getFullYear()) {
+    return d.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
+  }
+
+  // Si es otro año, mostrar dd/mm/yy
+  return d.toLocaleDateString("es-ES", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "2-digit",
+  });
+}
+
+export function getConversationDateLabel(
+  input: Date | string | number,
+): string {
+  const d = new Date(input);
+  if (Number.isNaN(d.getTime())) return "";
+
+  const now = new Date();
+
+  if (isSameDay(d, now)) {
+    return "Hoy";
+  }
+
+  if (isYesterday(d)) {
+    return "Ayer";
+  }
+
+  return d.toLocaleDateString("es-ES", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}

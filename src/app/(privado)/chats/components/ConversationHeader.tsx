@@ -8,7 +8,7 @@ export default function ConversationHeader({
   onBack,
 }: {
   title?: string | null;
-  phone?: string | null;
+  phone?: number | string | null;
   onBack?: () => void;
 }) {
   const hasPhone = !!phone;
