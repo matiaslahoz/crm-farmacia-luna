@@ -17,9 +17,12 @@ export default function ChatsPage() {
     msgsDisplay,
     loadingMsgs,
     hasMore,
-    loadMore,
+    loadMoreConversation,
     unreadCounts,
-  } = useChatsPage({ breakpoint: 640, chatsLimit: 400 });
+    loadMoreSessions,
+    hasMoreSessions,
+    loadingSessions,
+  } = useChatsPage({ breakpoint: 640 });
 
   return (
     <div className="flex h-full min-h-0 w-full">
@@ -44,6 +47,9 @@ export default function ChatsPage() {
           setQuery={setQuery}
           onSelect={handleSelectUser}
           unreadCounts={unreadCounts}
+          loadMoreSessions={loadMoreSessions}
+          hasMoreSessions={hasMoreSessions}
+          loadingSessions={loadingSessions}
         />
       </div>
 
@@ -58,7 +64,7 @@ export default function ChatsPage() {
           msgs={msgsDisplay}
           loading={loadingMsgs}
           hasMore={hasMore}
-          onLoadMore={loadMore}
+          onLoadMoreConversation={loadMoreConversation}
           onBack={isMobile ? () => handleSelectUser(0) : undefined}
         />
       </div>

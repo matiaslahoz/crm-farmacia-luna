@@ -12,7 +12,7 @@ export default function Conversation({
   msgs,
   loading,
   hasMore,
-  onLoadMore,
+  onLoadMoreConversation,
   onBack,
 }: {
   title?: string | null;
@@ -20,7 +20,7 @@ export default function Conversation({
   msgs: Chat[];
   loading: boolean;
   hasMore: boolean;
-  onLoadMore: () => void;
+  onLoadMoreConversation: () => void;
   onBack?: () => void;
 }) {
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -55,7 +55,7 @@ export default function Conversation({
         el.scrollHeight - el.scrollTop - el.clientHeight < 100;
       if (el.scrollTop < 60 && hasMore && !loading) {
         const prevHeight = el.scrollHeight;
-        onLoadMore();
+        onLoadMoreConversation();
         setTimeout(() => {
           const newHeight = el.scrollHeight;
           el.scrollTop = newHeight - prevHeight;
@@ -64,7 +64,7 @@ export default function Conversation({
     };
     el.addEventListener("scroll", onScroll, { passive: true });
     return () => el.removeEventListener("scroll", onScroll);
-  }, [hasMore, loading, onLoadMore]);
+  }, [hasMore, loading, onLoadMoreConversation]);
 
   const hasSelection = !!title;
 
@@ -76,8 +76,6 @@ export default function Conversation({
         ref={listRef}
         className="flex-1 overflow-auto px-4 py-6 space-y-4 bg-slate-50 relative scroll-smooth"
       >
-        {/* Optional: Add a subtle background pattern or gradient here if desired */}
-
         {!hasSelection && (
           <div className="flex flex-col items-center justify-center h-full text-gray-400 space-y-4">
             <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center">
@@ -124,7 +122,7 @@ export default function Conversation({
           <div className="flex-1 bg-gray-100/70 hover:bg-gray-100 transition-colors rounded-2xl flex items-center px-4 py-2 border border-transparent focus-within:border-gray-200 focus-within:bg-white focus-within:ring-2 focus-within:ring-[var(--primary)]/10">
             <input
               disabled
-              placeholder="Escribí un mensaje..." // Removed "solo lectura" to look cleaner, user knows it's read only if disabled effectively or just for UI
+              placeholder="Escribí un mensaje..."
               className="w-full bg-transparent border-none text-sm focus:ring-0 placeholder:text-gray-400 text-gray-700 disabled:cursor-not-allowed"
             />
           </div>

@@ -12,6 +12,9 @@ export default function SessionsList({
   setQuery,
   onSelect,
   unreadCounts,
+  loadMoreSessions,
+  hasMoreSessions,
+  loadingSessions,
 }: {
   groups: ChatGroup[];
   selectedUserId: number | null;
@@ -19,22 +22,16 @@ export default function SessionsList({
   setQuery: (q: string) => void;
   onSelect: (userId: number) => void;
   unreadCounts: Record<number, number>;
+  loadMoreSessions: () => void;
+  hasMoreSessions: boolean;
+  loadingSessions: boolean;
 }) {
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return groups;
-    return groups.filter(
-      (g) =>
-        (g.name || "").toLowerCase().includes(q) || (g.phone || "").includes(q),
-    );
-  }, [query, groups]);
-
   const sorted = useMemo(() => {
-    return [...filtered].sort(
+    return [...groups].sort(
       (a, b) =>
         new Date(b.latest.date).getTime() - new Date(a.latest.date).getTime(),
     );
-  }, [filtered]);
+  }, [groups]);
 
   return (
     <div className="flex flex-col h-full min-h-0 bg-white border-r border-gray-100">
@@ -53,7 +50,17 @@ export default function SessionsList({
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto min-h-0">
+      <div
+        className="flex-1 overflow-auto min-h-0"
+        onScroll={(e) => {
+          const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+          if (scrollHeight - scrollTop <= clientHeight + 50) {
+            if (!loadingSessions && hasMoreSessions) {
+              loadMoreSessions();
+            }
+          }
+        }}
+      >
         {sorted.map((g) => {
           return (
             <SessionGroupItem
@@ -65,7 +72,12 @@ export default function SessionsList({
             />
           );
         })}
-        {sorted.length === 0 && (
+        {loadingSessions && (
+          <div className="p-4 text-center text-xs text-gray-400">
+            Cargando más chats...
+          </div>
+        )}
+        {!loadingSessions && sorted.length === 0 && (
           <div className="p-6 text-sm text-gray-500">Sin resultados.</div>
         )}
       </div>

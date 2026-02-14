@@ -46,9 +46,9 @@ export default function SessionGroupItem({
               Pedido pendiente
             </span>
           ) : (
-            g.chats.length > 0 && (
+            g.latest.date && (
               <span className="text-[10px] text-gray-400 tabular-nums">
-                {formatChatDate(g.latest?.date)}
+                {formatChatDate(g.latest.date)}
               </span>
             )
           )}
