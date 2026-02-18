@@ -2,9 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import type { ChatGroup } from "@/lib/types";
+import type { ChatGroup, Session } from "@/lib/types";
 
-export default function useUnreadMessages(groups: ChatGroup[]) {
+export default function useUnreadMessages(
+  groups: ChatGroup[],
+  setSessions: React.Dispatch<React.SetStateAction<Session[]>>,
+) {
   const [counts, setCounts] = useState<Record<number, number>>({});
   const subRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
@@ -70,10 +73,10 @@ export default function useUnreadMessages(groups: ChatGroup[]) {
           user_id: number;
           type: string;
           date: string;
+          message: string;
         };
 
         if (!newRow) return;
-        if (newRow.type === "ia") return;
         const worksForGroup = groups.some((g) => g.user_id === newRow.user_id);
         if (!worksForGroup) return;
 
@@ -84,6 +87,22 @@ export default function useUnreadMessages(groups: ChatGroup[]) {
           ...prev,
           [newRow.user_id]: (prev[newRow.user_id] || 0) + 1,
         }));
+
+        setSessions((prev) => {
+          return prev.map((s) => {
+            if (s.user_id !== newRow.user_id) return s;
+            // Si el chat que llegó es más nuevo que el que tengo, actualizo latest
+            const prevDate = s.last_date ? new Date(String(s.last_date)) : null;
+            const newDate = new Date(newRow.date);
+            if (prevDate && newDate <= prevDate) return s;
+
+            return {
+              ...s,
+              last_date: newRow.date,
+              last_message: newRow.message,
+            };
+          });
+        });
       }, // Ejecuta esto cuando pase
     );
 
@@ -93,14 +112,14 @@ export default function useUnreadMessages(groups: ChatGroup[]) {
       ch.unsubscribe();
       subRef.current = null;
     };
-  }, [groups, getLastSeen]);
+  }, [getLastSeen, groups, setSessions]);
 
   useEffect(() => {
     loadCounts();
   }, [loadCounts]);
 
   useEffect(() => {
-    OpenChannel();
+    return OpenChannel();
   }, [OpenChannel]);
 
   const markAsRead = useCallback(

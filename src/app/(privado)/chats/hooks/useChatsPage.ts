@@ -52,7 +52,7 @@ export function useChatsPage({ breakpoint = 640 } = {}) {
     return sessions.map(sessionToGroup);
   }, [sessions]);
 
-  const { unreadCounts, markAsRead } = useUnreadMessages(groups);
+  const { unreadCounts, markAsRead } = useUnreadMessages(groups, setSessions);
 
   const currentGroup = useMemo(
     () =>
