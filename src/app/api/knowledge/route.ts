@@ -94,9 +94,9 @@ function parseCsvToRows(csv: string): string[][] {
 }
 
 function getSheetsClient() {
-  let raw = process.env.GOOGLE_SERVICE_ACCOUNT_KEY || "";
+  let raw = process.env.GOOGLE_SERVICE_ACCOUNT_KEY_B64 || "";
   if (!raw.trim()) {
-    throw new Error("Falta GOOGLE_SERVICE_ACCOUNT_KEY");
+    throw new Error("Falta GOOGLE_SERVICE_ACCOUNT_KEY_B64");
   }
 
   raw = raw.trim();
