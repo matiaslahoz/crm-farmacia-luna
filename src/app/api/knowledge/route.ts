@@ -63,15 +63,6 @@ function normalizeCsvUrl(url: string): string {
   return url;
 }
 
-function extractSheetIdFromUrl(url: string): string {
-  const m = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
-  if (!m)
-    throw new Error(
-      "No se pudo extraer spreadsheetId de GOOGLE_SHEETS_SYNONYMS_CSV",
-    );
-  return m[1];
-}
-
 function parseCsvToRows(csv: string): string[][] {
   const lines = csv.split(/\r?\n/);
   const rows: string[][] = [];
@@ -151,12 +142,6 @@ function getSheetsClient() {
 
     if (!email) throw new Error("client_email vacío");
 
-    // Logs seguros
-    console.error("[GSA] email:", email);
-    console.error("[GSA] key.len:", key.length);
-    console.error("[GSA] key.startsWith-BEGIN:", key.startsWith("-----BEGIN"));
-    console.error("[GSA] key.endsWith-NEWLINE:", key.endsWith("\n"));
-
     return { email, key };
   };
 
@@ -193,9 +178,9 @@ export async function GET(req: NextRequest) {
 
   try {
     if (doc === "kb_sinonimos") {
-      const rawUrl = process.env.GOOGLE_SHEETS_SYNONYMS_CSV || "";
+      const rawUrl = process.env.KB_SYNONYMS_GOOGLE_SHEETS_CSV || "";
       const csvUrl = normalizeCsvUrl(rawUrl);
-      if (!csvUrl) throw new Error("Falta env GOOGLE_SHEETS_SYNONYMS_CSV");
+      if (!csvUrl) throw new Error("Falta env KB_SYNONYMS_GOOGLE_SHEETS_CSV");
       const res = await fetch(csvUrl, { cache: "no-store" });
       if (!res.ok) throw new Error(`CSV fetch error: ${res.status}`);
       const csv = await res.text();
@@ -260,11 +245,11 @@ export async function POST(req: NextRequest) {
         try {
           const sheets = getSheetsClient();
           // pequeño ping: leer metadata de spreadsheet para validar credenciales sin tocar datos
-          const editUrl = process.env.GOOGLE_SHEETS_SYNONYMS_CSV || "";
+          const editUrl = process.env.KB_SYNONYMS_GOOGLE_SHEETS_CSV || "";
           const m = editUrl.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
           if (!m)
             throw new Error(
-              "GOOGLE_SHEETS_SYNONYMS_CSV inválida (no encuentro spreadsheetId)",
+              "KB_SYNONYMS_GOOGLE_SHEETS_CSV inválida (no encuentro spreadsheetId)",
             );
           const spreadsheetId = m[1];
           await sheets.spreadsheets.get({
@@ -300,11 +285,11 @@ export async function POST(req: NextRequest) {
           headers: { "Content-Type": "application/json" },
         });
       }
-      const editUrl = process.env.GOOGLE_SHEETS_SYNONYMS_CSV || "";
+      const editUrl = process.env.KB_SYNONYMS_GOOGLE_SHEETS_CSV || "";
       const m = editUrl.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
       if (!m)
         throw new Error(
-          "GOOGLE_SHEETS_SYNONYMS_CSV inválida (no encuentro spreadsheetId)",
+          "KB_SYNONYMS_GOOGLE_SHEETS_CSV inválida (no encuentro spreadsheetId)",
         );
       const spreadsheetId = m[1];
 

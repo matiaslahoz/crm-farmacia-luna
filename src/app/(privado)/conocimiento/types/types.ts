@@ -1,4 +1,4 @@
-export type DocKey = "kb_sinonimos" | "kb_institucional";
+export type DocKey = "kb_sinonimos" | "kb_institucional" | "kb_questions";
 
 export type Panel = {
   key: DocKey;

@@ -1,8 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import ScrollArrows from "./ScrollArrows";
 import { DocKey } from "../types/types";
+import { useKnowledge } from "../hooks/useKnowledge";
+import {
+  AlertCircle,
+  AlertTriangle,
+  Loader2,
+  RefreshCw,
+  Save,
+} from "lucide-react";
 
 type Props = {
   doc: DocKey;
@@ -10,82 +17,78 @@ type Props = {
 };
 
 export default function KnowledgeEditor({ doc, title }: Props) {
-  const [text, setText] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [savedAt, setSavedAt] = useState<string | null>(null);
-
-  const taRef = useRef<HTMLTextAreaElement>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
-      const res = await fetch(`/api/knowledge?doc=${encodeURIComponent(doc)}`, {
-        method: "GET",
-      });
-      const json = (await res.json()) as { text?: string; error?: string };
-      if (!cancelled) {
-        setText(json.text ?? "");
-        setLoading(false);
-        setTimeout(() => taRef.current?.focus(), 50);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [doc]);
-
-  async function handleSave() {
-    setSaving(true);
-    const res = await fetch("/api/knowledge", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, doc }),
-    });
-    setSaving(false);
-    if (res.ok) setSavedAt(new Date().toLocaleTimeString());
-    else alert("No se pudo guardar en Drive. Revisá consola/servidor.");
-  }
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
-        e.preventDefault();
-        void handleSave();
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [text, doc]);
+  const {
+    text,
+    setText,
+    loading,
+    saving,
+    savedAt,
+    dirty,
+    err,
+    taRef,
+    handleSave,
+    reload,
+  } = useKnowledge(doc);
 
   return (
-    <div className="relative rounded-2xl border border-gray-200 bg-white">
-      <div className="flex items-center justify-between p-3 border-b border-gray-200">
-        <div className="text-sm text-gray-700">
-          {title ?? "Documento de base de conocimientos"}
-          <span className="ml-2 rounded-md bg-gray-100 px-2 py-0.5 text-[11px] text-gray-600">
-            {doc}
-          </span>
-        </div>
-        <div className="flex items-center gap-3">
+    <div className="relative rounded-2xl border-gray-200 bg-white">
+      <div className="flex items-center justify-between p-3">
+        <div className="flex items-center gap-2">
           {savedAt && (
             <div className="text-xs text-gray-500">Guardado {savedAt}</div>
           )}
           <button
+            onClick={reload}
+            disabled={loading}
+            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+            <span className="hidden sm:inline">
+              {loading ? "Actualizando…" : "Refrescar"}
+            </span>
+          </button>
+          <button
             onClick={handleSave}
             disabled={saving || loading}
-            className="text-sm px-3 py-2 rounded-lg border hover:bg-gray-50 disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white rounded-xl bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700 transition-all shadow-sm hover:shadow-md disabled:opacity-50"
           >
-            {saving ? "Guardando…" : "Guardar"}
+            {saving ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Guardando…
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4" />
+                Guardar
+              </>
+            )}
           </button>
         </div>
       </div>
 
-      <div className="p-3">
+      <div className="p-3 space-y-3">
+        {/* Error message */}
+        {err && (
+          <div className="flex items-center gap-2 px-4 py-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl">
+            <AlertCircle size={20} className="flex-shrink-0" />
+            {err}
+          </div>
+        )}
+
+        {/* Dirty indicator */}
+        {dirty && (
+          <div className="flex items-center gap-2 px-4 py-3 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-xl">
+            <AlertTriangle size={20} className="flex-shrink-0" />
+            Hay cambios sin guardar
+          </div>
+        )}
+
         {loading ? (
-          <div className="text-sm text-gray-500">Cargando documento…</div>
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Cargando documento…
+          </div>
         ) : (
           <div className="relative min-h-0">
             <textarea
