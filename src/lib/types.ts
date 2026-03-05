@@ -5,6 +5,7 @@ export type Chat = {
   message?: string | null;
   user_id: number;
   users: User[] | User;
+  image_id?: string | null;
 };
 
 export type ChatGroup = {

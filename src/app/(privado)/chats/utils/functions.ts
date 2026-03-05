@@ -1,4 +1,5 @@
 import type { Chat, ChatGroup, Session } from "@/lib/types";
+import { Orientation } from "../components/WhatsAppImage";
 
 export function uniqSortByIdDesc(arr: Chat[]) {
   const map = new Map<number, Chat>();
@@ -36,4 +37,12 @@ export function sessionToGroup(s: Session): ChatGroup {
       user_id: s.user_id,
     },
   } as ChatGroup;
+}
+
+export function getOrientation(w: number, h: number): Orientation {
+  if (!w || !h) return "unknown";
+  const r = w / h;
+  if (r > 1.15) return "landscape";
+  if (r < 0.87) return "portrait";
+  return "square";
 }

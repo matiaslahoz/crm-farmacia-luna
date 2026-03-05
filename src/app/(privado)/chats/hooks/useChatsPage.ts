@@ -133,7 +133,7 @@ export function useChatsPage({ breakpoint = 640 } = {}) {
 
     const { data } = await supabase
       .from("chats")
-      .select("id,date,type,message,user_id, users(*)")
+      .select("id,date,type,message,user_id, users(*), image_id")
       .eq("user_id", selectedUserId)
       .order("id", { ascending: false })
       .range(0, PAGE_SIZE - 1);

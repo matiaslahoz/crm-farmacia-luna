@@ -1,11 +1,15 @@
+import { WhatsAppImage } from "./WhatsAppImage";
+
 export default function MessageBubble({
   own,
   text,
   time,
+  image_id,
 }: {
   own: boolean;
   text: string | null;
   time: string;
+  image_id: string | null | undefined;
 }) {
   return (
     <div
@@ -20,7 +24,10 @@ export default function MessageBubble({
           }
         `}
       >
-        <div className="whitespace-pre-wrap break-words">{text}</div>
+        <div className="whitespace-pre-wrap break-words">
+          {image_id && <WhatsAppImage mediaId={image_id} />}
+          {text}
+        </div>
         <div
           className={`text-[10px] mt-1 text-right font-medium tracking-wide
             ${own ? "text-blue-100/80" : "text-gray-400"}

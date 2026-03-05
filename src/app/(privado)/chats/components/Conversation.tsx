@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useMemo } from "react";
-import type { Chat } from "@/lib/types";
+import { useEffect, useRef, useMemo, Fragment } from "react";
 import { fmtTime, getConversationDateLabel } from "@/lib/dates";
 import ConversationHeader from "./ConversationHeader";
 import MessageBubble from "./MessageBubble";
+import { Chat } from "@/lib/types";
 
 export default function Conversation({
   title,
@@ -40,7 +40,6 @@ export default function Conversation({
     });
     return groups;
   }, [msgs]);
-
   useEffect(() => {
     if (nearBottomRef.current)
       bottomRef.current?.scrollIntoView({ behavior: "instant" });
@@ -103,12 +102,25 @@ export default function Conversation({
               </div>
               <div className="flex flex-col space-y-4">
                 {group.msgs.map((m) => (
-                  <MessageBubble
-                    key={m.id}
-                    own={m.type === "ia"}
-                    text={m.message ?? ""}
-                    time={fmtTime(m.date)}
-                  />
+                  <Fragment key={m.id}>
+                    {m.image_id && (
+                      <MessageBubble
+                        own={m.type === "ia"}
+                        text={null}
+                        time={fmtTime(m.date)}
+                        image_id={m.image_id}
+                      />
+                    )}
+                    {(!m.image_id ||
+                      (m.message && m.message.trim() !== "")) && (
+                      <MessageBubble
+                        own={m.type === "ia"}
+                        text={m.message ?? ""}
+                        time={fmtTime(m.date)}
+                        image_id={null}
+                      />
+                    )}
+                  </Fragment>
                 ))}
               </div>
             </div>
