@@ -40,6 +40,7 @@ export default function useUnreadMessages(
     const { data, error } = await supabase.rpc("unread_counts", {
       p_user_ids: userIds,
       p_last_seen: lastSeenMap,
+      p_tenant_id: process.env.NEXT_PUBLIC_TENANT_ID,
     });
 
     if (error) {

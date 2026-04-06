@@ -25,7 +25,7 @@ export function usePedidosPage() {
     const end = offset + PAGE_SIZE - 1;
 
     let query = supabase
-      .from("orders_crm")
+      .from("orders_crm_farmacia_luna")
       .select("id,created_at,total,items,name,phone,status")
       .order("created_at", { ascending: false })
       .range(offset, end);

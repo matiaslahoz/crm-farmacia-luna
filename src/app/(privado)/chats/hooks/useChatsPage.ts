@@ -89,10 +89,12 @@ export function useChatsPage({ breakpoint = 640 } = {}) {
       isSearching
         ? {
             p_query: debouncedQuery.trim(),
+            p_tenant_id: process.env.NEXT_PUBLIC_TENANT_ID,
             p_limit: SESSIONS_PAGE_SIZE,
             p_offset: sessionsOffset,
           }
         : {
+            p_tenant_id: process.env.NEXT_PUBLIC_TENANT_ID,
             p_limit: SESSIONS_PAGE_SIZE,
             p_offset: sessionsOffset,
           },

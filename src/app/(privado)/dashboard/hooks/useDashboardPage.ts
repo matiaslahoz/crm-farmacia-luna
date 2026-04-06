@@ -50,7 +50,7 @@ export default function useDashboardPage(period: Period) {
 
       const { data: cardsData, error: cardsErr } = await supabase.rpc(
         "sessions_cards",
-        { p_day: todayStr },
+        { p_tenant_id: process.env.NEXT_PUBLIC_TENANT_ID, p_day: todayStr },
       );
 
       if (!mounted) return;
@@ -83,6 +83,7 @@ export default function useDashboardPage(period: Period) {
       const { data, error } = await supabase.rpc("sessions_chart", {
         p_from: chartRange.fromISO,
         p_to: chartRange.toISO,
+        p_tenant_id: process.env.NEXT_PUBLIC_TENANT_ID,
         p_period: period,
       });
 
