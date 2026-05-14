@@ -1,91 +1,184 @@
-import { NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { google } from "googleapis";
-import { Readable } from "stream";
 
 export const runtime = "nodejs";
 
-function getDriveOAuthClient() {
-  const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID!;
-  const clientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET!;
-  const refreshToken = process.env.GOOGLE_OAUTH_REFRESH_TOKEN!;
-  if (!clientId || !clientSecret || !refreshToken) {
-    throw new Error(
-      "Faltan vars OAuth (CLIENT_ID/CLIENT_SECRET/REFRESH_TOKEN)",
-    );
+function normalizeCsvUrl(url: string): string {
+  if (!url) return "";
+  if (url.includes("/export?format=csv")) return url;
+  if (url.includes("/edit"))
+    return url.replace(/\/edit.*$/, "/export?format=csv");
+  return url;
+}
+
+function parseCsvToRows(csv: string): string[][] {
+  const lines = csv.split(/\r?\n/);
+  const rows: string[][] = [];
+  for (const raw of lines) {
+    if (raw.trim().length === 0) continue;
+    const cells: string[] = [];
+    let cur = "";
+    let inQ = false;
+    for (let i = 0; i < raw.length; i++) {
+      const ch = raw[i];
+      if (ch === '"') {
+        if (inQ && raw[i + 1] === '"') {
+          cur += '"';
+          i++;
+        } else {
+          inQ = !inQ;
+        }
+      } else if (ch === "," && !inQ) {
+        cells.push(cur);
+        cur = "";
+      } else {
+        cur += ch;
+      }
+    }
+    cells.push(cur);
+    rows.push(cells.map((c) => c));
+  }
+  return rows;
+}
+
+function getSheetsClient() {
+  let raw = process.env.GOOGLE_SERVICE_ACCOUNT_KEY_B64 || "";
+  if (!raw.trim()) {
+    throw new Error("Falta GOOGLE_SERVICE_ACCOUNT_KEY_B64");
   }
 
-  const auth = new google.auth.OAuth2(clientId, clientSecret);
-  auth.setCredentials({ refresh_token: refreshToken });
-  return google.drive({ version: "v3", auth });
-}
+  raw = raw.trim();
+  if (
+    (raw.startsWith('"') && raw.endsWith('"')) ||
+    (raw.startsWith("'") && raw.endsWith("'"))
+  ) {
+    raw = raw.slice(1, -1);
+  }
 
-function formatFechaDMY(date = new Date()) {
-  const d = String(date.getDate()).padStart(2, "0");
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const y = date.getFullYear();
-  return `${d}-${m}-${y}`;
-}
+  const tryParseJson = (s: string) => {
+    const obj = JSON.parse(s) as {
+      client_email?: string;
+      private_key?: string;
+    };
+    const email = (obj.client_email || "").trim();
+    let key = obj.private_key || "";
 
-export async function POST(req: Request) {
+    key = key.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+    if (key.includes("\\n")) key = key.replace(/\\n/g, "\n");
+    key = key.trim();
+
+    const hasBegin = key.includes("BEGIN PRIVATE KEY");
+    const hasRsaBegin = key.includes("BEGIN RSA PRIVATE KEY");
+    const hasEnd =
+      key.includes("END PRIVATE KEY") || key.includes("END RSA PRIVATE KEY");
+    if (!(hasBegin || hasRsaBegin) || !hasEnd) {
+      throw new Error("private_key sin encabezado/footers PEM");
+    }
+    if (!key.startsWith("-----BEGIN")) {
+      const idx = key.indexOf("-----BEGIN");
+      if (idx >= 0) key = key.slice(idx);
+    }
+    if (!key.endsWith("\n")) key = key + "\n";
+
+    if (!email) throw new Error("client_email vacío");
+
+    return { email, key };
+  };
+
+  let creds: { email: string; key: string };
+
   try {
-    const productosFolderId = process.env.GOOGLE_DRIVE_PRODUCTOS_FOLDER_ID;
-    if (!productosFolderId)
-      throw new Error("Falta GOOGLE_DRIVE_PRODUCTOS_FOLDER_ID");
+    creds = tryParseJson(raw);
+  } catch (e1) {
+    try {
+      const decoded = Buffer.from(raw, "base64").toString("utf8");
+      creds = tryParseJson(decoded);
+    } catch (e2) {
+      throw new Error(
+        "GOOGLE_SERVICE_ACCOUNT_KEY inválida: no es JSON ni base64 válido",
+      );
+    }
+  }
 
-    const form = await req.formData();
-    const file = form.get("file");
+  const auth = new google.auth.JWT({
+    email: creds.email,
+    key: creds.key,
+    scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+  });
 
-    if (!(file instanceof File)) {
-      return NextResponse.json(
-        { error: "Falta 'file' en el FormData" },
-        { status: 400 },
+  return google.sheets({ version: "v4", auth });
+}
+
+export async function GET(req: NextRequest) {
+  try {
+    const rawUrl = process.env.KB_PRODUCTS_GOOGLE_SHEETS_XSLX || "";
+    const csvUrl = normalizeCsvUrl(rawUrl);
+    if (!csvUrl) throw new Error("Falta env KB_PRODUCTS_GOOGLE_SHEETS_XSLX");
+    
+    const res = await fetch(csvUrl, { cache: "no-store" });
+    if (!res.ok) throw new Error(`CSV fetch error: ${res.status}`);
+    const csv = await res.text();
+    
+    return new Response(JSON.stringify({ text: csv }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "No se pudo leer el documento";
+    return new Response(JSON.stringify({ error: msg }), { status: 500 });
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = (await req.json()) as {
+      text?: string;
+    };
+    
+    const csv = body.text ?? "";
+    if (!csv.trim()) {
+      return new Response(JSON.stringify({ ok: false, error: "CSV vacío" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    const editUrl = process.env.KB_PRODUCTS_GOOGLE_SHEETS_XSLX || "";
+    const m = editUrl.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+    if (!m)
+      throw new Error(
+        "KB_PRODUCTS_GOOGLE_SHEETS_XSLX inválida (no encuentro spreadsheetId)",
+      );
+    const spreadsheetId = m[1];
+
+    const rows = parseCsvToRows(csv);
+    if (rows.length === 0) {
+      return new Response(
+        JSON.stringify({ ok: false, error: "CSV sin filas" }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        }
       );
     }
 
-    const content = await file.text();
-
-    const drive = getDriveOAuthClient();
-
-    const fecha = formatFechaDMY();
-    const name = `Productos - ${fecha}.txt`;
-
-    const res = await drive.files.create({
-      requestBody: {
-        name,
-        mimeType: "text/plain",
-        parents: [productosFolderId],
-      },
-      media: {
-        mimeType: "text/plain",
-        body: Readable.from([content]),
-      },
-      fields: "id,name,parents,webViewLink",
+    const sheets = getSheetsClient();
+    // Assuming columns A to H for products
+    await sheets.spreadsheets.values.clear({ spreadsheetId, range: "A:H" });
+    await sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: "A1",
+      valueInputOption: "RAW",
+      requestBody: { values: rows },
     });
 
-    const webhookUrl = process.env.FARMACIA_API_BASE_URL;
-    const webhookKey = process.env.FARMACIA_API_KEY;
-
-    if (webhookUrl && webhookKey) {
-      fetch(webhookUrl, {
-        method: "GET",
-        headers: {
-          "x-api-key": webhookKey,
-        },
-      })
-        .then((r) => {
-          console.log("Webhook response status:", r.status);
-        })
-        .catch((e) => {
-          console.error("Error disparando webhook:", e);
-        });
-    }
-
-    return NextResponse.json(res.data, { status: 200 });
-  } catch (err) {
-    console.error(err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Error desconocido" },
-      { status: 500 },
-    );
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (e: unknown) {
+    const msg =
+      e instanceof Error ? e.message : "No se pudo guardar el documento";
+    return new Response(JSON.stringify({ error: msg }), { status: 500 });
   }
 }
