@@ -14,18 +14,18 @@ export default function ImportProducts() {
         Importar Lista de Precios
       </h3>
       <p className="text-sm text-gray-500 mb-4">
-        Subí tu archivo .txt (formato visualizado) para actualizar la base de
+        Subí tu archivo .xlsx para actualizar la base de
         datos de productos.
       </p>
 
       <div className="flex flex-col md:flex-row md:items-end gap-4 md:gap-3">
         <div className="w-full md:flex-1">
           <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-            Archivo .txt
+            Archivo .xlsx
           </label>
           <input
             type="file"
-            accept=".txt,.csv"
+            accept=".xlsx"
             onChange={handleFileChange}
             disabled={uploading}
             className="block w-full text-sm text-slate-500

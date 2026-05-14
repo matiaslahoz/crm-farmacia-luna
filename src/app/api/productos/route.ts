@@ -42,22 +42,22 @@ export async function POST(req: Request) {
       );
     }
 
-    const content = await file.text();
+    const buffer = Buffer.from(await file.arrayBuffer());
 
     const drive = getDriveOAuthClient();
 
     const fecha = formatFechaDMY();
-    const name = `Productos - ${fecha}.txt`;
+    const name = `Productos - ${fecha}.xlsx`;
 
     const res = await drive.files.create({
       requestBody: {
         name,
-        mimeType: "text/plain",
+        mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         parents: [productosFolderId],
       },
       media: {
-        mimeType: "text/plain",
-        body: Readable.from([content]),
+        mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        body: Readable.from([buffer]),
       },
       fields: "id,name,parents,webViewLink",
     });
